@@ -2,86 +2,95 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>JTM Love Space</title>
-    
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22JTM%20Love%20Space%22,%22short_name%22:%22JTM%20Love%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%230f172a%22,%22theme_color%22:%22%230f172a%22,%22icons%22:[{%22src%22:%22https://ui-avatars.com/api/?name=JTM%26background=db2777%26color=fff%22,%22sizes%22:%22192x192%22,%22type%22:%22image/png%22}]}">
-
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
-        body { background: #0f172a; color: white; font-family: sans-serif; overflow: hidden; }
-        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        body { background: #0b141a; color: #e9edef; font-family: sans-serif; overflow: hidden; }
         .page { display: none; height: 100vh; flex-direction: column; }
         .page.active { display: flex; }
-        .msg-bubble { max-width: 80%; padding: 10px 15px; border-radius: 20px; margin-bottom: 8px; font-size: 14px; }
-        .msg-left { background: #334155; align-self: flex-start; border-bottom-left-radius: 2px; }
-        .msg-right { background: #db2777; align-self: flex-end; border-bottom-right-radius: 2px; }
-        .xoxo-cell { height: 85px; display: flex; align-items: center; justify-content: center; font-size: 35px; font-weight: 900; background: rgba(255,255,255,0.05); border-radius: 15px; }
+        .msg-bubble { max-width: 75%; padding: 6px 10px; border-radius: 8px; margin-bottom: 4px; font-size: 13px; position: relative; }
+        .msg-left { background: #202c33; align-self: flex-start; border-top-left-radius: 0; }
+        .msg-right { background: #005c4b; align-self: flex-end; border-top-right-radius: 0; }
+        .msg-media { width: 100%; border-radius: 5px; margin-top: 2px; }
+        .xoxo-cell { height: 70px; display: flex; align-items: center; justify-content: center; font-size: 28px; background: #202c33; border-radius: 10px; }
+        .profile-img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.2); }
     </style>
 </head>
 <body>
-    <div id="loginPage" class="flex flex-col items-center justify-center h-screen p-6 text-center">
-        <h1 class="text-4xl font-black italic mb-10 tracking-tighter text-pink-500">JTM LOVE</h1>
-        <div class="grid grid-cols-2 gap-8 w-full max-w-sm">
+    <div id="loginPage" class="flex flex-col items-center justify-center h-screen p-6">
+        <h1 class="text-xl font-bold mb-8 text-pink-500 italic uppercase tracking-tighter">JTM Love Space</h1>
+        <div class="grid grid-cols-2 gap-6 w-full max-w-[260px]">
             <button onclick="loginAs('Okta')" class="flex flex-col items-center">
-                <img src="https://ui-avatars.com/api/?name=Okta&background=0D8ABC&color=fff" class="w-20 h-20 rounded-full border-4 border-blue-500 mb-2">
-                <span class="font-black italic text-xs">OKTA</span>
+                <div id="login-img-Okta"></div>
+                <span class="text-[10px] font-bold mt-2">OKTA</span>
             </button>
             <button onclick="loginAs('Novi')" class="flex flex-col items-center">
-                <img src="https://ui-avatars.com/api/?name=Novi&background=db2777&color=fff" class="w-20 h-20 rounded-full border-4 border-pink-500 mb-2">
-                <span class="font-black italic text-xs">NOVI</span>
+                <div id="login-img-Novi"></div>
+                <span class="text-[10px] font-bold mt-2">NOVI</span>
             </button>
         </div>
     </div>
 
     <div id="mainApp" class="hidden h-screen flex flex-col">
-        <header class="p-4 flex justify-between items-center glass">
-            <div>
-                <h2 id="partnerName" class="font-black italic text-xs uppercase text-pink-400">Partner</h2>
-                <p id="statusTxt" class="text-[8px] font-bold text-gray-400">OFFLINE</p>
+        <header class="p-3 flex justify-between items-center bg-[#202c33]">
+            <div class="flex items-center gap-3">
+                <label for="profileUpload" class="cursor-pointer">
+                    <div id="partnerImgContainer"></div>
+                    <input type="file" id="profileUpload" class="hidden" accept="image/*" onchange="changeMyProfile(this)">
+                </label>
+                <div>
+                    <h2 id="partnerName" class="font-bold text-sm">Partner</h2>
+                    <p id="statusTxt" class="text-[10px] text-gray-400">offline</p>
+                </div>
             </div>
-            <div class="flex gap-4">
-                <button onclick="alert('Fitur Voice sedang dalam pemeliharaan')" class="w-10 h-10 rounded-full bg-pink-500 flex items-center justify-center shadow-lg active:scale-125 transition">
-                    <i class="fa fa-phone text-white text-sm"></i>
-                </button>
+            <div class="flex gap-4 text-gray-400 text-sm">
+                <i onclick="alert('Klik foto profil di kiri untuk ganti foto kamu!')" class="fa fa-camera"></i>
+                <i class="fa fa-ellipsis-v"></i>
             </div>
         </header>
 
-        <main class="flex-1 overflow-hidden relative">
-            <div id="page-chat" class="page active flex flex-col p-4 h-full">
-                <div id="chatDisplay" class="flex-1 overflow-y-auto flex flex-col gap-2 pb-24"></div>
-                <div class="absolute bottom-20 left-4 right-4 flex gap-2">
-                    <input type="text" id="chatInput" placeholder="Ketik pesan..." class="flex-1 glass rounded-full px-5 py-3 text-sm outline-none font-bold">
-                    <button onclick="sendChat()" class="bg-pink-600 w-12 h-12 rounded-full flex items-center justify-center"><i class="fa fa-paper-plane"></i></button>
+        <main class="flex-1 overflow-hidden relative bg-[#0b141a]">
+            <div id="page-chat" class="page active flex flex-col p-3 h-full">
+                <div id="chatDisplay" class="flex-1 overflow-y-auto flex flex-col gap-1 pb-20"></div>
+                <div class="absolute bottom-2 left-2 right-2 flex gap-2 items-center">
+                    <div class="flex-1 bg-[#202c33] rounded-full px-3 py-2 flex items-center">
+                        <label for="mediaInput" class="cursor-pointer">
+                            <i class="fa fa-paperclip text-gray-400 mr-3"></i>
+                            <input type="file" id="mediaInput" class="hidden" accept="image/*,video/*" onchange="handleMedia(this)">
+                        </label>
+                        <input type="text" id="chatInput" placeholder="Ketik pesan" class="bg-transparent flex-1 text-sm outline-none">
+                    </div>
+                    <button onclick="sendChat()" class="bg-[#00a884] w-10 h-10 rounded-full flex items-center justify-center text-white">
+                        <i class="fa fa-paper-plane text-xs"></i>
+                    </button>
                 </div>
             </div>
 
-            <div id="page-game" class="page p-6 overflow-y-auto">
-                <h2 class="font-black italic text-xl mb-6 text-center">MINI GAMES</h2>
-                <div onclick="showPage('xoxo')" class="glass p-6 rounded-[2rem] flex justify-between items-center mb-4">
-                    <span class="font-black italic">XOXO (TIC TAC TOE)</span>
-                    <i class="fa fa-gamepad text-2xl text-yellow-400"></i>
+            <div id="page-game" class="page p-4">
+                <h2 class="text-xs font-bold mb-4 text-center text-gray-500 uppercase italic">Hiburan JTM</h2>
+                <div onclick="showPage('xoxo')" class="bg-[#202c33] p-4 rounded-xl flex justify-between items-center">
+                    <span class="text-sm">Tic Tac Toe (XOXO)</span>
+                    <i class="fa fa-play text-[#00a884]"></i>
                 </div>
             </div>
 
             <div id="page-xoxo" class="page p-6">
-                <button onclick="showPage('game')" class="mb-4 text-[10px] font-black uppercase text-pink-400"><i class="fa fa-arrow-left"></i> Kembali</button>
-                <div class="grid grid-cols-3 gap-3 glass p-4 rounded-[2rem]" id="boardXOXO"></div>
-                <button onclick="db.ref('game/xoxo').remove()" class="mt-6 w-full py-3 glass rounded-full text-[10px] font-black uppercase">Reset Game</button>
+                <button onclick="showPage('game')" class="mb-4 text-xs text-pink-500"><i class="fa fa-arrow-left"></i> Kembali</button>
+                <div class="grid grid-cols-3 gap-2 w-full max-w-[220px] mx-auto" id="boardXOXO"></div>
+                <button onclick="db.ref('game/xoxo').remove()" class="mt-6 w-full text-[10px] text-gray-500">RESET PAPAN</button>
             </div>
         </main>
 
-        <footer class="glass h-16 flex justify-around items-center">
-            <button onclick="showPage('chat')" class="flex flex-col items-center flex-1 text-pink-400">
-                <i class="fa fa-comments text-xl"></i><span class="text-[8px] font-black uppercase">Chat</span>
+        <footer class="bg-[#202c33] h-14 flex justify-around items-center border-t border-white/5">
+            <button onclick="showPage('chat')" id="btn-chat" class="flex flex-col items-center flex-1 text-[#00a884]">
+                <i class="fa fa-message text-lg"></i><span class="text-[10px] mt-1">Chat</span>
             </button>
-            <button onclick="showPage('game')" class="flex flex-col items-center flex-1">
-                <i class="fa fa-gamepad text-xl"></i><span class="text-[8px] font-black uppercase">Game</span>
+            <button onclick="showPage('game')" id="btn-game" class="flex flex-col items-center flex-1 text-gray-400">
+                <i class="fa fa-gamepad text-lg"></i><span class="text-[10px] mt-1">Game</span>
             </button>
         </footer>
     </div>
@@ -99,24 +108,81 @@
         let user = ""; let partner = ""; let symbol = "";
         let board = ["","","","","","","","",""]; let myTurn = false;
 
+        // Load Foto Profil dari Database untuk Halaman Login
+        function loadLoginAvatars() {
+            ['Okta', 'Novi'].forEach(name => {
+                db.ref(`profile_pics/${name}`).on('value', s => {
+                    const url = s.val() || `https://ui-avatars.com/api/?name=${name}&background=${name=='Okta'?'0D8ABC':'db2777'}&color=fff`;
+                    document.getElementById(`login-img-${name}`).innerHTML = `<img src="${url}" class="w-16 h-16 rounded-full border-2 border-${name=='Okta'?'blue':'pink'}-500 object-cover">`;
+                });
+            });
+        }
+        loadLoginAvatars();
+
         function loginAs(name) {
             user = name; partner = name === "Okta" ? "Novi" : "Okta";
             symbol = name === "Okta" ? "X" : "O";
-            document.getElementById('loginPage').classList.add('hidden');
+            document.getElementById('loginPage').style.display = 'none';
             document.getElementById('mainApp').classList.remove('hidden');
             document.getElementById('partnerName').innerText = partner;
             
             db.ref(`couple_status/${user}`).set('online');
             db.ref(`couple_status/${user}`).onDisconnect().set('offline');
+            
+            // Pantau status & foto partner
             db.ref(`couple_status/${partner}`).on('value', s => {
-                document.getElementById('statusTxt').innerText = s.val() === 'online' ? "ONLINE" : "OFFLINE";
+                document.getElementById('statusTxt').innerText = s.val() === 'online' ? "online" : "offline";
             });
+            db.ref(`profile_pics/${partner}`).on('value', s => {
+                const url = s.val() || `https://ui-avatars.com/api/?name=${partner}&background=${partner=='Okta'?'0D8ABC':'db2777'}&color=fff`;
+                document.getElementById('partnerImgContainer').innerHTML = `<img src="${url}" class="profile-img">`;
+            });
+
             startChat(); syncGame();
+        }
+
+        // FUNGSI GANTI PROFIL
+        function changeMyProfile(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                db.ref(`profile_pics/${user}`).set(e.target.result);
+                alert("Foto profil kamu berhasil diupdate!");
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleMedia(input) {
+            const file = input.files[0];
+            if (!file) return;
+            if (file.type.includes('video')) {
+                const video = document.createElement('video');
+                video.preload = 'metadata';
+                video.onloadedmetadata = function() {
+                    window.URL.revokeObjectURL(video.src);
+                    if (video.duration > 30) { alert("Video maksimal 30 detik!"); return; }
+                    processAndSend(file);
+                }
+                video.src = URL.createObjectURL(file);
+            } else { processAndSend(file); }
+        }
+
+        function processAndSend(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                db.ref('couple_chats').push({
+                    sender: user, type: file.type.includes('image') ? 'image' : 'video', content: e.target.result
+                });
+            };
+            reader.readAsDataURL(file);
         }
 
         function showPage(id) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-'+id).classList.add('active');
+            document.getElementById('btn-chat').style.color = id === 'chat' ? '#00a884' : '#8696a0';
+            document.getElementById('btn-game').style.color = id === 'game' ? '#00a884' : '#8696a0';
         }
 
         function startChat() {
@@ -124,7 +190,10 @@
                 const d = document.getElementById('chatDisplay'); d.innerHTML = "";
                 s.forEach(c => {
                     const m = c.val();
-                    d.innerHTML += `<div class="msg-bubble ${m.sender === user ? 'msg-right' : 'msg-left'}">${m.text}</div>`;
+                    let content = m.text || "";
+                    if(m.type === 'image') content = `<img src="${m.content}" class="msg-media">`;
+                    if(m.type === 'video') content = `<video src="${m.content}" class="msg-media" controls></video>`;
+                    d.innerHTML += `<div class="msg-bubble ${m.sender === user ? 'msg-right' : 'msg-left'}">${content}</div>`;
                 });
                 d.scrollTop = d.scrollHeight;
             });
@@ -132,8 +201,8 @@
 
         function sendChat() {
             const i = document.getElementById('chatInput');
-            if(!i.value) return;
-            db.ref('couple_chats').push({ sender: user, text: i.value });
+            if(!i.value.trim()) return;
+            db.ref('couple_chats').push({ sender: user, text: i.value, type: 'text' });
             i.value = "";
         }
 
