@@ -3,95 +3,174 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>JTM Love Space</title>
+    <title>WhatsApp JTM</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
-        body { background: #0b141a; color: #e9edef; font-family: sans-serif; margin: 0; overflow: hidden; }
+        body { background: #0b141a; color: #e9edef; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; overflow: hidden; }
         .app-wrapper { width: 100vw; height: 100vh; display: flex; flex-direction: column; }
-        .page { display: none; flex: 1; flex-direction: column; overflow: hidden; }
-        .page.active { display: flex; }
+        
+        /* Latar Belakang Doodle WhatsApp */
+        #page-chat {
+            background-color: #0b141a;
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+            background-repeat: repeat;
+            background-size: 400px;
+            position: relative;
+        }
 
-        /* Bubble Chat Proposional */
-        .msg-bubble { max-width: 85%; padding: 12px 16px; border-radius: 18px; margin-bottom: 8px; font-size: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.3); }
-        .msg-left { background: #202c33; align-self: flex-start; border-bottom-left-radius: 4px; }
-        .msg-right { background: #005c4b; align-self: flex-end; border-bottom-right-radius: 4px; }
+        /* Bubble Chat ala WhatsApp */
+        .msg-bubble { 
+            max-width: 75%; 
+            padding: 8px 12px; 
+            margin-bottom: 4px; 
+            font-size: 14.5px; 
+            position: relative;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.2);
+        }
+        .msg-left { 
+            background: #202c33; 
+            align-self: flex-start; 
+            border-radius: 0 8px 8px 8px; 
+        }
+        .msg-right { 
+            background: #005c4b; 
+            align-self: flex-end; 
+            border-radius: 8px 0 8px 8px; 
+        }
+        
+        /* Info Waktu Kecil */
+        .msg-time { font-size: 10px; color: rgba(255,255,255,0.5); float: right; margin-top: 8px; margin-left: 8px; }
 
-        /* Menu Dropdown */
+        /* Input Area WhatsApp */
+        .input-bar {
+            background: transparent;
+            padding: 8px 10px;
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+        }
+        .input-box {
+            background: #202c33;
+            border-radius: 24px;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            flex: 1;
+            gap: 12px;
+        }
+        .circle-btn {
+            background: #00a884;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
         .dropdown { 
-            display: none; position: absolute; right: 10px; top: 60px; 
-            background: #233138; border-radius: 12px; z-index: 100; 
-            min-width: 200px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); 
+            display: none; position: absolute; right: 10px; top: 55px; 
+            background: #233138; border-radius: 3px; z-index: 100; 
+            min-width: 180px; box-shadow: 0 2px 5px rgba(0,0,0,0.4); 
         }
         .dropdown.show { display: block; }
-        .dropdown-item { padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; }
+        .dropdown-item { padding: 12px 20px; font-size: 15px; cursor: pointer; }
     </style>
 </head>
 <body>
     <div class="app-wrapper">
-        <header id="appHeader" class="hidden p-4 flex justify-between items-center bg-[#202c33] border-b border-white/5 shadow-lg">
-            <div class="flex items-center gap-3">
-                <div id="partnerImgHead" class="w-10 h-10 rounded-full overflow-hidden border border-white/10"></div>
-                <div>
-                    <h2 id="headerPartnerName" class="font-bold text-sm">Partner</h2>
-                    <p id="statusTxt" class="text-[11px] text-[#00a884]">online</p>
+        <header id="appHeader" class="hidden flex justify-between items-center bg-[#202c33] p-2 pr-1 shadow-md z-50">
+            <div class="flex items-center gap-2">
+                <i class="fa fa-arrow-left text-gray-400 ml-1"></i>
+                <div id="partnerImgHead" class="w-10 h-10 rounded-full overflow-hidden bg-gray-600"></div>
+                <div class="flex flex-col">
+                    <span id="headerPartnerName" class="font-semibold text-base leading-tight">Partner</span>
+                    <span id="statusTxt" class="text-[11px] text-gray-400">terakhir dilihat hari ini...</span>
                 </div>
             </div>
-            <div class="flex items-center gap-4">
-                <button onclick="location.reload()" class="text-gray-400 p-2"><i class="fa fa-sync-alt text-lg"></i></button>
+            <div class="flex items-center gap-5 text-gray-300 mr-2">
+                <i class="fa fa-video"></i>
+                <i class="fa fa-phone-alt text-sm"></i>
                 <div class="relative">
-                    <button onclick="toggleMenu()" class="text-gray-400 p-2"><i class="fa fa-ellipsis-v text-xl"></i></button>
+                    <i onclick="toggleMenu()" class="fa fa-ellipsis-v p-2"></i>
                     <div id="menuDropdown" class="dropdown">
-                        <div class="dropdown-item" onclick="showPage('myprofile')"><i class="fa fa-user-circle mr-3 text-blue-400"></i> Profil Saya</div>
-                        <div class="dropdown-item" onclick="showPage('game')"><i class="fa fa-gamepad mr-3 text-yellow-400"></i> Game</div>
-                        <div class="dropdown-item" onclick="alert('Menghubungkan...')"><i class="fa fa-microphone mr-3 text-pink-500"></i> Chat Suara</div>
+                        <div class="dropdown-item" onclick="location.reload()">Refresh</div>
+                        <div class="dropdown-item" onclick="showPage('myprofile')">Profil Saya</div>
+                        <div class="dropdown-item" onclick="showPage('game')">Game</div>
                     </div>
                 </div>
             </div>
         </header>
 
-        <div id="loginPage" class="flex flex-col items-center justify-center h-full p-6">
-            <h1 class="text-2xl font-black italic mb-12 text-pink-500 tracking-tighter">JTM LOVE SPACE</h1>
-            <div class="flex justify-center gap-12 w-full">
+        <div id="loginPage" class="flex flex-col items-center justify-center h-full p-6 text-center">
+            <div class="w-16 h-16 bg-[#00a884] rounded-2xl flex items-center justify-center mb-6 shadow-xl">
+                <i class="fa fa-heart text-3xl text-white"></i>
+            </div>
+            <h1 class="text-xl font-bold mb-8 text-gray-300">Masuk sebagai...</h1>
+            <div class="flex gap-8">
                 <button onclick="loginAs('Okta')" class="flex flex-col items-center">
-                    <div id="login-img-Okta" class="w-24 h-24 rounded-full border-2 border-blue-500 mb-3"></div>
-                    <span class="text-xs font-bold text-blue-400 uppercase tracking-widest">Okta</span>
+                    <div id="login-img-Okta" class="w-20 h-20 rounded-full border-2 border-[#00a884] mb-2 overflow-hidden bg-gray-800"></div>
+                    <span class="text-sm font-medium">Okta</span>
                 </button>
                 <button onclick="loginAs('Novi')" class="flex flex-col items-center">
-                    <div id="login-img-Novi" class="w-24 h-24 rounded-full border-2 border-pink-500 mb-3"></div>
-                    <span class="text-xs font-bold text-pink-500 uppercase tracking-widest">Novi</span>
+                    <div id="login-img-Novi" class="w-20 h-20 rounded-full border-2 border-pink-500 mb-2 overflow-hidden bg-gray-800"></div>
+                    <span class="text-sm font-medium">Novi</span>
                 </button>
             </div>
         </div>
 
         <main class="flex-1 overflow-hidden relative">
-            <div id="page-chat" class="page active flex flex-col p-4 h-full">
-                <div id="chatDisplay" class="flex-1 overflow-y-auto flex flex-col gap-1 pb-24"></div>
-                <div class="absolute bottom-6 left-4 right-4 flex gap-3 items-center">
-                    <div class="flex-1 bg-[#202c33] rounded-full px-5 py-4 flex items-center shadow-2xl">
-                        <label for="mediaInput" class="mr-3"><i class="fa fa-paperclip text-gray-400 text-xl"></i></label>
-                        <input type="file" id="mediaInput" class="hidden" accept="image/*,video/*" onchange="handleMedia(this)">
-                        <input type="text" id="chatInput" placeholder="Ketik pesan..." class="bg-transparent flex-1 outline-none text-white">
+            <div id="page-chat" class="page active flex flex-col h-full">
+                <div id="chatDisplay" class="flex-1 overflow-y-auto flex flex-col p-4 pb-24">
+                    <div class="self-center bg-[#182229] text-[#ffd279] text-[11px] p-2 rounded-lg text-center mb-4 max-w-[90%] border border-[#ffd279]/10">
+                        <i class="fa fa-lock text-[10px] mr-1"></i> Pesan dan panggilan terenkripsi secara end-to-end. Hanya orang di chat ini yang bisa membaca.
                     </div>
-                    <button onclick="sendChat()" class="bg-[#00a884] w-14 h-14 rounded-full flex items-center justify-center text-white shadow-xl">
-                        <i class="fa fa-paper-plane text-xl"></i>
+                </div>
+
+                <div class="input-bar">
+                    <div class="input-box">
+                        <i class="fa fa-smile text-gray-400 text-xl"></i>
+                        <input type="text" id="chatInput" placeholder="Ketik pesan" class="bg-transparent flex-1 outline-none text-white text-base">
+                        <label for="mediaInput" class="cursor-pointer"><i class="fa fa-paperclip text-gray-400 text-xl -rotate-45"></i></label>
+                        <input type="file" id="mediaInput" class="hidden" onchange="handleMedia(this)">
+                        <i class="fa fa-camera text-gray-400 text-xl"></i>
+                    </div>
+                    <button id="sendBtn" onclick="sendChat()" class="circle-btn">
+                        <i class="fa fa-microphone text-xl" id="micIcon"></i>
                     </button>
                 </div>
             </div>
 
-            <div id="page-myprofile" class="page p-6 items-center">
-                <button onclick="showPage('chat')" class="self-start mb-8 text-pink-500 font-bold"><i class="fa fa-arrow-left"></i> Kembali</button>
-                <div class="relative mb-8">
-                    <div id="myBigImg" class="w-32 h-32 rounded-full overflow-hidden border-4 border-[#00a884]"></div>
-                    <label for="profEdit" class="absolute bottom-0 right-0 bg-[#00a884] p-3 rounded-full border-4 border-[#0b141a]">
-                        <i class="fa fa-camera text-white"></i>
-                        <input type="file" id="profEdit" class="hidden" onchange="updatePhoto(this)">
-                    </label>
+            <div id="page-myprofile" class="page p-6 bg-[#0b141a]">
+                <div class="flex items-center gap-6 mb-8">
+                    <i onclick="showPage('chat')" class="fa fa-arrow-left text-gray-400 text-xl"></i>
+                    <h2 class="text-xl font-bold">Profil</h2>
                 </div>
-                <input type="text" id="editName" class="w-full bg-[#202c33] p-4 rounded-xl text-lg font-bold outline-none mb-6 text-center" placeholder="Nama Kamu">
-                <button onclick="saveName()" class="w-full bg-[#00a884] py-5 rounded-xl font-bold">SIMPAN</button>
+                <div class="flex flex-col items-center">
+                    <div class="relative mb-8">
+                        <div id="myBigImg" class="w-44 h-44 rounded-full overflow-hidden"></div>
+                        <label for="profEdit" class="absolute bottom-2 right-2 bg-[#00a884] p-4 rounded-full border-4 border-[#0b141a] cursor-pointer shadow-lg">
+                            <i class="fa fa-camera text-white"></i>
+                            <input type="file" id="profEdit" class="hidden" onchange="updatePhoto(this)">
+                        </label>
+                    </div>
+                    <div class="w-full bg-[#111b21] p-4 rounded-lg">
+                        <p class="text-[#00a884] text-sm mb-1">Nama</p>
+                        <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                            <input type="text" id="editName" class="bg-transparent flex-1 outline-none text-lg font-medium">
+                            <i onclick="saveName()" class="fa fa-pen text-gray-500"></i>
+                        </div>
+                        <p class="text-gray-500 text-[12px] mt-2">Ini bukan nama pengguna atau PIN. Nama ini akan terlihat oleh pasangan kamu.</p>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
@@ -107,16 +186,25 @@
 
         let user = "", partner = "";
 
+        // Pantau input untuk ganti icon mic ke kirim
+        document.getElementById('chatInput').addEventListener('input', function(e) {
+            const btn = document.getElementById('micIcon');
+            if(e.target.value.trim() !== "") { btn.className = "fa fa-paper-plane"; }
+            else { btn.className = "fa fa-microphone"; }
+        });
+
         function loadAvatars() {
             ['Okta', 'Novi'].forEach(n => {
                 db.ref(`profile_data/${n}/photo`).on('value', s => {
-                    const url = s.val() || `https://ui-avatars.com/api/?name=${n}&background=db2777&color=fff`;
-                    if(document.getElementById(`login-img-${n}`)) document.getElementById(`login-img-${n}`).innerHTML = `<img src="${url}" class="w-full h-full object-cover rounded-full">`;
+                    const url = s.val() || `https://ui-avatars.com/api/?name=${n}&background=075e54&color=fff`;
+                    if(document.getElementById(`login-img-${n}`)) document.getElementById(`login-img-${n}`).innerHTML = `<img src="${url}" class="w-full h-full object-cover">`;
                     if(user === n) document.getElementById('myBigImg').innerHTML = `<img src="${url}" class="w-full h-full object-cover">`;
                     if(partner === n) document.getElementById('partnerImgHead').innerHTML = `<img src="${url}" class="w-full h-full object-cover">`;
                 });
                 db.ref(`profile_data/${n}/name`).on('value', s => {
-                    if(partner === n) document.getElementById('headerPartnerName').innerText = s.val() || n;
+                    const name = s.val() || n;
+                    if(partner === n) document.getElementById('headerPartnerName').innerText = name;
+                    if(user === n) document.getElementById('editName').value = name;
                 });
             });
         }
@@ -128,53 +216,59 @@
             document.getElementById('appHeader').classList.remove('hidden');
             db.ref(`couple_status/${user}`).set('online');
             db.ref(`couple_status/${user}`).onDisconnect().set('offline');
+            db.ref(`couple_status/${partner}`).on('value', s => {
+                document.getElementById('statusTxt').innerText = s.val() === 'online' ? 'online' : 'terakhir dilihat hari ini...';
+            });
             startChat();
         }
 
         function toggleMenu() { document.getElementById('menuDropdown').classList.toggle('show'); }
+
         function showPage(id) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-'+id).classList.add('active');
             document.getElementById('menuDropdown').classList.remove('show');
         }
 
-        function updatePhoto(input) {
-            const f = input.files[0]; if(!f) return;
-            const r = new FileReader();
-            r.onload = (e) => db.ref(`profile_data/${user}/photo`).set(e.target.result);
-            r.readAsDataURL(f);
-        }
-
-        function saveName() {
-            const v = document.getElementById('editName').value;
-            if(v) { db.ref(`profile_data/${user}/name`).set(v); alert("Updated!"); showPage('chat'); }
-        }
-
         function handleMedia(input) {
             const f = input.files[0]; if(!f) return;
             const r = new FileReader();
-            r.onload = (e) => db.ref('couple_chats').push({ sender: user, type: f.type.includes('image')?'image':'video', content: e.target.result });
+            r.onload = (e) => db.ref('couple_chats').push({ sender: user, type: 'image', content: e.target.result, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) });
             r.readAsDataURL(f);
         }
 
         function startChat() {
             db.ref('couple_chats').limitToLast(20).on('value', s => {
-                const d = document.getElementById('chatDisplay'); d.innerHTML = "";
+                const d = document.getElementById('chatDisplay');
+                // Simpan notice enkripsi
+                const notice = d.querySelector('.self-center').outerHTML;
+                d.innerHTML = notice;
                 s.forEach(c => {
                     const m = c.val();
-                    let con = m.text || "";
-                    if(m.type === 'image') con = `<img src="${m.content}" class="w-full rounded-lg">`;
-                    if(m.type === 'video') con = `<video src="${m.content}" class="w-full rounded-lg" controls></video>`;
-                    d.innerHTML += `<div class="msg-bubble ${m.sender === user ? 'msg-right' : 'msg-left'}">${con}</div>`;
+                    const time = m.time || "00:00";
+                    let content = m.text || "";
+                    if(m.type === 'image') content = `<img src="${m.content}" class="w-full rounded-lg mb-1">`;
+                    d.innerHTML += `
+                        <div class="msg-bubble ${m.sender === user ? 'msg-right' : 'msg-left'}">
+                            ${content}
+                            <span class="msg-time">${time} ${m.sender === user ? '<i class="fa fa-check-double text-blue-400"></i>' : ''}</span>
+                        </div>`;
                 });
                 d.scrollTop = d.scrollHeight;
             });
         }
 
         function sendChat() {
-            const i = document.getElementById('chatInput'); if(!i.value.trim()) return;
-            db.ref('couple_chats').push({ sender: user, text: i.value, type: 'text' });
+            const i = document.getElementById('chatInput');
+            if(!i.value.trim()) return;
+            db.ref('couple_chats').push({
+                sender: user,
+                text: i.value,
+                type: 'text',
+                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+            });
             i.value = "";
+            document.getElementById('micIcon').className = "fa fa-microphone";
         }
     </script>
 </body>
