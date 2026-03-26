@@ -7,8 +7,6 @@
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="JTM Love">
-    <link rel="apple-touch-icon" href="https://ui-avatars.com/api/?name=JTM&background=db2777&color=fff">
     <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22JTM%20Love%20Space%22,%22short_name%22:%22JTM%20Love%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%230f172a%22,%22theme_color%22:%22%230f172a%22,%22icons%22:[{%22src%22:%22https://ui-avatars.com/api/?name=JTM%26background=db2777%26color=fff%22,%22sizes%22:%22192x192%22,%22type%22:%22image/png%22}]}">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -23,20 +21,19 @@
         .msg-bubble { max-width: 80%; padding: 10px 15px; border-radius: 20px; margin-bottom: 8px; font-size: 14px; }
         .msg-left { background: #334155; align-self: flex-start; border-bottom-left-radius: 2px; }
         .msg-right { background: #db2777; align-self: flex-end; border-bottom-right-radius: 2px; }
-        .xoxo-cell { height: 85px; display: flex; align-items: center; justify-content: center; font-size: 35px; font-weight: 900; background: rgba(255,255,255,0.05); border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); }
+        .xoxo-cell { height: 85px; display: flex; align-items: center; justify-content: center; font-size: 35px; font-weight: 900; background: rgba(255,255,255,0.05); border-radius: 15px; }
     </style>
 </head>
 <body>
     <div id="loginPage" class="flex flex-col items-center justify-center h-screen p-6 text-center">
-        <h1 class="text-4xl font-black italic mb-2 tracking-tighter">LOVE <span class="text-pink-500">SPACE</span></h1>
-        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-10">Exclusive for Okta & Novi</p>
+        <h1 class="text-4xl font-black italic mb-10 tracking-tighter text-pink-500">JTM LOVE</h1>
         <div class="grid grid-cols-2 gap-8 w-full max-w-sm">
-            <button onclick="loginAs('Okta')" class="flex flex-col items-center group">
-                <img src="https://ui-avatars.com/api/?name=Okta&background=0D8ABC&color=fff" class="w-20 h-20 rounded-full border-4 border-blue-500 mb-2 group-active:scale-90 transition">
+            <button onclick="loginAs('Okta')" class="flex flex-col items-center">
+                <img src="https://ui-avatars.com/api/?name=Okta&background=0D8ABC&color=fff" class="w-20 h-20 rounded-full border-4 border-blue-500 mb-2">
                 <span class="font-black italic text-xs">OKTA</span>
             </button>
-            <button onclick="loginAs('Novi')" class="flex flex-col items-center group">
-                <img src="https://ui-avatars.com/api/?name=Novi&background=db2777&color=fff" class="w-20 h-20 rounded-full border-4 border-pink-500 mb-2 group-active:scale-90 transition">
+            <button onclick="loginAs('Novi')" class="flex flex-col items-center">
+                <img src="https://ui-avatars.com/api/?name=Novi&background=db2777&color=fff" class="w-20 h-20 rounded-full border-4 border-pink-500 mb-2">
                 <span class="font-black italic text-xs">NOVI</span>
             </button>
         </div>
@@ -46,11 +43,12 @@
         <header class="p-4 flex justify-between items-center glass">
             <div>
                 <h2 id="partnerName" class="font-black italic text-xs uppercase text-pink-400">Partner</h2>
-                <p class="text-[8px] font-bold text-gray-400">STATUS: ACTIVE</p>
+                <p id="statusTxt" class="text-[8px] font-bold text-gray-400">OFFLINE</p>
             </div>
-            <div class="flex gap-3">
-                <button onclick="installApp()" id="btnInstall" class="hidden text-xs bg-white/10 px-3 py-1 rounded-full font-bold">Install</button>
-                <div class="w-8 h-8 rounded-full bg-pink-500 flex items-center justify-center"><i class="fa fa-heart text-white text-xs"></i></div>
+            <div class="flex gap-4">
+                <button onclick="alert('Fitur Voice sedang dalam pemeliharaan')" class="w-10 h-10 rounded-full bg-pink-500 flex items-center justify-center shadow-lg active:scale-125 transition">
+                    <i class="fa fa-phone text-white text-sm"></i>
+                </button>
             </div>
         </header>
 
@@ -59,13 +57,13 @@
                 <div id="chatDisplay" class="flex-1 overflow-y-auto flex flex-col gap-2 pb-24"></div>
                 <div class="absolute bottom-20 left-4 right-4 flex gap-2">
                     <input type="text" id="chatInput" placeholder="Ketik pesan..." class="flex-1 glass rounded-full px-5 py-3 text-sm outline-none font-bold">
-                    <button onclick="sendChat()" class="bg-pink-600 w-12 h-12 rounded-full flex items-center justify-center shadow-lg"><i class="fa fa-paper-plane"></i></button>
+                    <button onclick="sendChat()" class="bg-pink-600 w-12 h-12 rounded-full flex items-center justify-center"><i class="fa fa-paper-plane"></i></button>
                 </div>
             </div>
 
             <div id="page-game" class="page p-6 overflow-y-auto">
                 <h2 class="font-black italic text-xl mb-6 text-center">MINI GAMES</h2>
-                <div onclick="showPage('xoxo')" class="glass p-6 rounded-[2rem] flex justify-between items-center mb-4 active:scale-95 transition">
+                <div onclick="showPage('xoxo')" class="glass p-6 rounded-[2rem] flex justify-between items-center mb-4">
                     <span class="font-black italic">XOXO (TIC TAC TOE)</span>
                     <i class="fa fa-gamepad text-2xl text-yellow-400"></i>
                 </div>
@@ -73,18 +71,17 @@
 
             <div id="page-xoxo" class="page p-6">
                 <button onclick="showPage('game')" class="mb-4 text-[10px] font-black uppercase text-pink-400"><i class="fa fa-arrow-left"></i> Kembali</button>
-                <p id="statusGame" class="text-center text-[10px] font-bold mb-4 text-yellow-400 uppercase italic"></p>
                 <div class="grid grid-cols-3 gap-3 glass p-4 rounded-[2rem]" id="boardXOXO"></div>
-                <button onclick="resetGame()" class="mt-6 w-full py-3 glass rounded-full text-[10px] font-black uppercase">Reset Game</button>
+                <button onclick="db.ref('game/xoxo').remove()" class="mt-6 w-full py-3 glass rounded-full text-[10px] font-black uppercase">Reset Game</button>
             </div>
         </main>
 
         <footer class="glass h-16 flex justify-around items-center">
-            <button onclick="showPage('chat')" class="flex flex-col items-center gap-1 flex-1 py-2 text-pink-400">
-                <i class="fa fa-comments text-lg"></i><span class="text-[8px] font-black uppercase">Chat</span>
+            <button onclick="showPage('chat')" class="flex flex-col items-center flex-1 text-pink-400">
+                <i class="fa fa-comments text-xl"></i><span class="text-[8px] font-black uppercase">Chat</span>
             </button>
-            <button onclick="showPage('game')" class="flex flex-col items-center gap-1 flex-1 py-2">
-                <i class="fa fa-gamepad text-lg"></i><span class="text-[8px] font-black uppercase">Game</span>
+            <button onclick="showPage('game')" class="flex flex-col items-center flex-1">
+                <i class="fa fa-gamepad text-xl"></i><span class="text-[8px] font-black uppercase">Game</span>
             </button>
         </footer>
     </div>
@@ -101,24 +98,6 @@
 
         let user = ""; let partner = ""; let symbol = "";
         let board = ["","","","","","","","",""]; let myTurn = false;
-        let deferredPrompt;
-
-        // FITUR DOWNLOAD LOGIC
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            document.getElementById('btnInstall').classList.remove('hidden');
-        });
-
-        function installApp() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then(() => {
-                    document.getElementById('btnInstall').classList.add('hidden');
-                    deferredPrompt = null;
-                });
-            }
-        }
 
         function loginAs(name) {
             user = name; partner = name === "Okta" ? "Novi" : "Okta";
@@ -126,8 +105,13 @@
             document.getElementById('loginPage').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
             document.getElementById('partnerName').innerText = partner;
-            startChat();
-            syncGame();
+            
+            db.ref(`couple_status/${user}`).set('online');
+            db.ref(`couple_status/${user}`).onDisconnect().set('offline');
+            db.ref(`couple_status/${partner}`).on('value', s => {
+                document.getElementById('statusTxt').innerText = s.val() === 'online' ? "ONLINE" : "OFFLINE";
+            });
+            startChat(); syncGame();
         }
 
         function showPage(id) {
@@ -155,10 +139,8 @@
 
         function syncGame() {
             db.ref('game/xoxo').on('value', s => {
-                const d = s.val();
-                if(d) { board = d.board; myTurn = d.turn === user; }
-                else { board = ["","","","","","","","",""]; myTurn = (user === "Okta"); }
-                renderBoard();
+                const d = s.val() || { board: ["","","","","","","","",""], turn: "Okta" };
+                board = d.board; myTurn = d.turn === user; renderBoard();
             });
         }
 
@@ -167,7 +149,6 @@
             board.forEach((v, i) => {
                 c.innerHTML += `<div onclick="move(${i})" class="xoxo-cell ${v=='X'?'text-blue-400':'text-pink-400'}">${v}</div>`;
             });
-            document.getElementById('statusGame').innerText = myTurn ? "GILIRANKU!" : "TUNGGU GILIRANNYA...";
         }
 
         function move(i) {
@@ -175,10 +156,6 @@
                 board[i] = symbol;
                 db.ref('game/xoxo').set({ board: board, turn: partner });
             }
-        }
-
-        function resetGame() {
-            db.ref('game/xoxo').remove();
         }
     </script>
 </body>
