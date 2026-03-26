@@ -9,64 +9,59 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
-        body { background: #000; color: #e9edef; font-family: sans-serif; margin: 0; display: flex; justify-content: center; }
-        
-        /* KUNCI TAMPILAN HP */
-        .mobile-frame { 
-            width: 100%; max-width: 500px; height: 100vh; 
-            background: #0b141a; position: relative; 
-            display: flex; flex-direction: column; 
-            box-shadow: 0 0 50px rgba(0,0,0,0.8);
-        }
-
-        .page { display: none; height: 100%; flex-direction: column; overflow: hidden; }
+        body { background: #0b141a; color: #e9edef; font-family: sans-serif; margin: 0; overflow: hidden; }
+        .app-wrapper { width: 100vw; height: 100vh; display: flex; flex-direction: column; }
+        .page { display: none; flex: 1; flex-direction: column; overflow: hidden; }
         .page.active { display: flex; }
 
-        /* BUBBLE CHAT YANG LEBIH BESAR UNTUK JEMPOL HP */
-        .msg-bubble { max-width: 85%; padding: 10px 14px; border-radius: 15px; margin-bottom: 8px; font-size: 15px; }
-        .msg-left { background: #202c33; align-self: flex-start; border-bottom-left-radius: 2px; }
-        .msg-right { background: #005c4b; align-self: flex-end; border-bottom-right-radius: 2px; }
-        
+        /* Bubble Chat Proposional */
+        .msg-bubble { max-width: 85%; padding: 12px 16px; border-radius: 18px; margin-bottom: 8px; font-size: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+        .msg-left { background: #202c33; align-self: flex-start; border-bottom-left-radius: 4px; }
+        .msg-right { background: #005c4b; align-self: flex-end; border-bottom-right-radius: 4px; }
+
+        /* Menu Dropdown */
         .dropdown { 
             display: none; position: absolute; right: 10px; top: 60px; 
             background: #233138; border-radius: 12px; z-index: 100; 
-            min-width: 200px; border: 1px solid rgba(255,255,255,0.1); 
+            min-width: 200px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); 
         }
         .dropdown.show { display: block; }
-        .dropdown-item { padding: 15px; font-size: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .dropdown-item { padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; }
     </style>
 </head>
 <body>
-    <div class="mobile-frame">
-        <header id="appHeader" class="hidden p-4 flex justify-between items-center bg-[#202c33] shadow-md z-50">
+    <div class="app-wrapper">
+        <header id="appHeader" class="hidden p-4 flex justify-between items-center bg-[#202c33] border-b border-white/5 shadow-lg">
             <div class="flex items-center gap-3">
-                <div id="partnerImgHead" class="w-11 h-11 rounded-full overflow-hidden border-2 border-white/10"></div>
+                <div id="partnerImgHead" class="w-10 h-10 rounded-full overflow-hidden border border-white/10"></div>
                 <div>
                     <h2 id="headerPartnerName" class="font-bold text-sm">Partner</h2>
                     <p id="statusTxt" class="text-[11px] text-[#00a884]">online</p>
                 </div>
             </div>
-            <div class="relative">
-                <button onclick="toggleMenu()" class="p-2 text-gray-300"><i class="fa fa-ellipsis-v text-xl"></i></button>
-                <div id="menuDropdown" class="dropdown shadow-2xl">
-                    <div class="dropdown-item" onclick="location.reload()"><i class="fa fa-sync-alt mr-3 text-green-400"></i> Refresh Aplikasi</div>
-                    <div class="dropdown-item" onclick="showPage('myprofile')"><i class="fa fa-user-circle mr-3 text-blue-400"></i> Profil Saya</div>
-                    <div class="dropdown-item" onclick="showPage('game')"><i class="fa fa-gamepad mr-3 text-yellow-400"></i> Game</div>
-                    <div class="dropdown-item" onclick="alert('Menghubungkan suara...')"><i class="fa fa-phone-alt mr-3 text-pink-500"></i> Voice Chat</div>
+            <div class="flex items-center gap-4">
+                <button onclick="location.reload()" class="text-gray-400 p-2"><i class="fa fa-sync-alt text-lg"></i></button>
+                <div class="relative">
+                    <button onclick="toggleMenu()" class="text-gray-400 p-2"><i class="fa fa-ellipsis-v text-xl"></i></button>
+                    <div id="menuDropdown" class="dropdown">
+                        <div class="dropdown-item" onclick="showPage('myprofile')"><i class="fa fa-user-circle mr-3 text-blue-400"></i> Profil Saya</div>
+                        <div class="dropdown-item" onclick="showPage('game')"><i class="fa fa-gamepad mr-3 text-yellow-400"></i> Game</div>
+                        <div class="dropdown-item" onclick="alert('Menghubungkan...')"><i class="fa fa-microphone mr-3 text-pink-500"></i> Chat Suara</div>
+                    </div>
                 </div>
             </div>
         </header>
 
-        <div id="loginPage" class="flex flex-col items-center justify-center h-full p-10 bg-[#0b141a]">
-            <h1 class="text-3xl font-black italic mb-16 text-pink-600 tracking-tighter">JTM LOVE</h1>
-            <div class="grid grid-cols-2 gap-10 w-full">
+        <div id="loginPage" class="flex flex-col items-center justify-center h-full p-6">
+            <h1 class="text-2xl font-black italic mb-12 text-pink-500 tracking-tighter">JTM LOVE SPACE</h1>
+            <div class="flex justify-center gap-12 w-full">
                 <button onclick="loginAs('Okta')" class="flex flex-col items-center">
-                    <div id="login-img-Okta" class="w-24 h-24 rounded-full border-4 border-blue-500 mb-4 overflow-hidden shadow-2xl"></div>
-                    <span class="font-bold text-sm text-blue-400">OKTA</span>
+                    <div id="login-img-Okta" class="w-24 h-24 rounded-full border-2 border-blue-500 mb-3"></div>
+                    <span class="text-xs font-bold text-blue-400 uppercase tracking-widest">Okta</span>
                 </button>
                 <button onclick="loginAs('Novi')" class="flex flex-col items-center">
-                    <div id="login-img-Novi" class="w-24 h-24 rounded-full border-4 border-pink-500 mb-4 overflow-hidden shadow-2xl"></div>
-                    <span class="font-bold text-sm text-pink-400">NOVI</span>
+                    <div id="login-img-Novi" class="w-24 h-24 rounded-full border-2 border-pink-500 mb-3"></div>
+                    <span class="text-xs font-bold text-pink-500 uppercase tracking-widest">Novi</span>
                 </button>
             </div>
         </div>
@@ -74,29 +69,29 @@
         <main class="flex-1 overflow-hidden relative">
             <div id="page-chat" class="page active flex flex-col p-4 h-full">
                 <div id="chatDisplay" class="flex-1 overflow-y-auto flex flex-col gap-1 pb-24"></div>
-                <div class="absolute bottom-5 left-4 right-4 flex gap-3 items-center">
-                    <div class="flex-1 bg-[#202c33] rounded-full px-5 py-3.5 flex items-center shadow-2xl">
-                        <label for="mediaInput" class="cursor-pointer mr-4"><i class="fa fa-paperclip text-gray-400 text-xl"></i></label>
+                <div class="absolute bottom-6 left-4 right-4 flex gap-3 items-center">
+                    <div class="flex-1 bg-[#202c33] rounded-full px-5 py-4 flex items-center shadow-2xl">
+                        <label for="mediaInput" class="mr-3"><i class="fa fa-paperclip text-gray-400 text-xl"></i></label>
                         <input type="file" id="mediaInput" class="hidden" accept="image/*,video/*" onchange="handleMedia(this)">
-                        <input type="text" id="chatInput" placeholder="Ketik pesan..." class="bg-transparent flex-1 text-base outline-none text-white">
+                        <input type="text" id="chatInput" placeholder="Ketik pesan..." class="bg-transparent flex-1 outline-none text-white">
                     </div>
-                    <button onclick="sendChat()" class="bg-[#00a884] w-14 h-14 rounded-full flex items-center justify-center text-white shadow-xl active:scale-90 transition">
-                        <i class="fa fa-paper-plane text-lg"></i>
+                    <button onclick="sendChat()" class="bg-[#00a884] w-14 h-14 rounded-full flex items-center justify-center text-white shadow-xl">
+                        <i class="fa fa-paper-plane text-xl"></i>
                     </button>
                 </div>
             </div>
 
-            <div id="page-myprofile" class="page p-6 items-center bg-[#0b141a]">
-                <button onclick="showPage('chat')" class="self-start mb-10 text-pink-500 font-bold"><i class="fa fa-arrow-left"></i> Kembali</button>
-                <div class="relative mb-10">
-                    <div id="myBigImg" class="w-40 h-40 rounded-full overflow-hidden border-4 border-[#00a884]"></div>
-                    <label for="profEdit" class="absolute bottom-2 right-2 bg-[#00a884] p-3 rounded-full border-4 border-[#0b141a]">
+            <div id="page-myprofile" class="page p-6 items-center">
+                <button onclick="showPage('chat')" class="self-start mb-8 text-pink-500 font-bold"><i class="fa fa-arrow-left"></i> Kembali</button>
+                <div class="relative mb-8">
+                    <div id="myBigImg" class="w-32 h-32 rounded-full overflow-hidden border-4 border-[#00a884]"></div>
+                    <label for="profEdit" class="absolute bottom-0 right-0 bg-[#00a884] p-3 rounded-full border-4 border-[#0b141a]">
                         <i class="fa fa-camera text-white"></i>
                         <input type="file" id="profEdit" class="hidden" onchange="updatePhoto(this)">
                     </label>
                 </div>
-                <input type="text" id="editName" class="w-full bg-[#202c33] p-4 rounded-xl text-lg font-bold outline-none mb-6" placeholder="Nama Kamu">
-                <button onclick="saveName()" class="w-full bg-[#00a884] py-5 rounded-xl font-black text-sm tracking-widest">SIMPAN PERUBAHAN</button>
+                <input type="text" id="editName" class="w-full bg-[#202c33] p-4 rounded-xl text-lg font-bold outline-none mb-6 text-center" placeholder="Nama Kamu">
+                <button onclick="saveName()" class="w-full bg-[#00a884] py-5 rounded-xl font-bold">SIMPAN</button>
             </div>
         </main>
     </div>
@@ -110,14 +105,13 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let user = "", partner = "", symbol = "";
+        let user = "", partner = "";
 
-        // LOAD DATA
         function loadAvatars() {
             ['Okta', 'Novi'].forEach(n => {
                 db.ref(`profile_data/${n}/photo`).on('value', s => {
                     const url = s.val() || `https://ui-avatars.com/api/?name=${n}&background=db2777&color=fff`;
-                    if(document.getElementById(`login-img-${n}`)) document.getElementById(`login-img-${n}`).innerHTML = `<img src="${url}" class="w-full h-full object-cover">`;
+                    if(document.getElementById(`login-img-${n}`)) document.getElementById(`login-img-${n}`).innerHTML = `<img src="${url}" class="w-full h-full object-cover rounded-full">`;
                     if(user === n) document.getElementById('myBigImg').innerHTML = `<img src="${url}" class="w-full h-full object-cover">`;
                     if(partner === n) document.getElementById('partnerImgHead').innerHTML = `<img src="${url}" class="w-full h-full object-cover">`;
                 });
@@ -153,7 +147,7 @@
 
         function saveName() {
             const v = document.getElementById('editName').value;
-            if(v) { db.ref(`profile_data/${user}/name`).set(v); alert("Nama disimpan!"); showPage('chat'); }
+            if(v) { db.ref(`profile_data/${user}/name`).set(v); alert("Updated!"); showPage('chat'); }
         }
 
         function handleMedia(input) {
