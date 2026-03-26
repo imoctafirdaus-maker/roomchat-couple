@@ -3,207 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WhatsApp JTM</title>
+    <title>TrackCust JTM - Driver System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
-        body { background: #0b141a; color: #e9edef; font-family: sans-serif; margin: 0; overflow: hidden; }
-        .app-wrapper { width: 100vw; height: 100vh; display: flex; flex-direction: column; }
-        
-        /* Background WhatsApp Doodle */
-        #page-chat {
-            background-color: #0b141a;
-            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
-            background-repeat: repeat;
-            background-size: 380px;
-            position: relative;
-        }
-
-        /* Bubble Chat dengan Ekor */
-        .msg-bubble { 
-            max-width: 80%; padding: 8px 12px; margin-bottom: 6px; font-size: 15px; 
-            position: relative; box-shadow: 0 1px 1px rgba(0,0,0,0.2); 
-        }
-        .msg-left { background: #202c33; align-self: flex-start; border-radius: 0 10px 10px 10px; }
-        .msg-right { background: #005c4b; align-self: flex-end; border-radius: 10px 0 10px 10px; }
-        
-        .msg-time { font-size: 10px; color: rgba(255,255,255,0.5); float: right; margin-top: 6px; margin-left: 10px; }
-
-        /* Area Input (Fixed Bottom) */
-        .input-bar {
-            background: transparent; padding: 10px; display: flex;
-            align-items: flex-end; gap: 8px; position: absolute; bottom: 0; width: 100%;
-        }
-        .input-box {
-            background: #202c33; border-radius: 25px; padding: 10px 15px;
-            display: flex; align-items: center; flex: 1; gap: 12px;
-        }
-        .circle-btn {
-            background: #00a884; width: 50px; height: 50px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; color: white;
-        }
-
-        .dropdown { 
-            display: none; position: absolute; right: 10px; top: 55px; 
-            background: #233138; border-radius: 4px; z-index: 100; min-width: 170px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-        }
-        .dropdown.show { display: block; }
-        .dropdown-item { padding: 14px 18px; font-size: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        body { background: #f0f2f5; margin: 0; overflow-x: hidden; font-family: sans-serif; }
+        .header-jtm { background: #005580; padding: 12px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        .order-card { background: white; border-radius: 15px; padding: 15px; margin: 10px; border-left: 6px solid #e31837; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .btn-action { padding: 12px; border-radius: 8px; font-weight: bold; font-size: 13px; text-align: center; flex: 1; text-transform: uppercase; }
+        .status-badge { background: #ebf5ff; color: #005580; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+        #modal-add { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
     </style>
 </head>
 <body>
-    <div class="app-wrapper">
-        <header id="appHeader" class="hidden flex justify-between items-center bg-[#202c33] p-2 shadow-md z-50">
-            <div class="flex items-center gap-2">
-                <i class="fa fa-arrow-left text-gray-400"></i>
-                <div id="partnerImgHead" class="w-10 h-10 rounded-full overflow-hidden bg-gray-700"></div>
-                <div class="flex flex-col">
-                    <span id="headerPartnerName" class="font-bold text-base leading-tight">Partner</span>
-                    <span id="statusTxt" class="text-[11px] text-gray-400">online</span>
-                </div>
-            </div>
-            <div class="flex items-center gap-5 text-gray-300 mr-2">
-                <i class="fa fa-video"></i> <i class="fa fa-phone-alt text-sm"></i>
-                <div class="relative">
-                    <i onclick="toggleMenu()" class="fa fa-ellipsis-v p-2"></i>
-                    <div id="menuDropdown" class="dropdown">
-                        <div class="dropdown-item" onclick="location.reload()">Refresh</div>
-                        <div class="dropdown-item" onclick="showPage('myprofile')">Profil</div>
-                    </div>
-                </div>
-            </div>
-        </header>
 
-        <div id="loginPage" class="flex flex-col items-center justify-center h-full p-6 text-center">
-            <h1 class="text-xl font-bold mb-10 text-gray-300 uppercase tracking-widest">WhatsApp JTM</h1>
-            <div class="flex gap-10">
-                <button onclick="loginAs('Okta')" class="flex flex-col items-center">
-                    <div id="login-img-Okta" class="w-20 h-20 rounded-full border-2 border-[#00a884] mb-2 overflow-hidden bg-gray-800"></div>
-                    <span class="text-sm">Okta</span>
-                </button>
-                <button onclick="loginAs('Novi')" class="flex flex-col items-center">
-                    <div id="login-img-Novi" class="w-20 h-20 rounded-full border-2 border-pink-500 mb-2 overflow-hidden bg-gray-800"></div>
-                    <span class="text-sm">Novi</span>
-                </button>
-            </div>
+    <div class="header-jtm">
+        <h1 class="text-white font-black italic text-xl">DOMINO'S <span class="text-red-500">JTM</span></h1>
+        <div class="flex items-center gap-2">
+            <span id="activeUser" class="bg-white text-[#005580] px-3 py-1 rounded-full text-[10px] font-black">OKTA</span>
+            <button onclick="location.reload()" class="bg-red-500 text-white w-8 h-8 rounded-md"><i class="fa fa-sync-alt text-xs"></i></button>
         </div>
+    </div>
 
-        <main class="flex-1 overflow-hidden relative">
-            <div id="page-chat" class="page active flex flex-col h-full">
-                <div id="chatDisplay" class="flex-1 overflow-y-auto flex flex-col p-4 pb-24">
-                    <div class="self-center bg-[#182229] text-[#ffd279] text-[11px] p-2 rounded-lg text-center mb-4 max-w-[90%] border border-[#ffd279]/15">
-                        <i class="fa fa-lock text-[10px] mr-1"></i> Pesan dan panggilan terenkripsi secara end-to-end.
+    <div class="p-3 bg-white border-b">
+        <div class="relative mb-2">
+            <input type="text" placeholder="Cari Nama/No HP/Driver..." class="w-full bg-gray-100 p-3 rounded-xl text-sm outline-none border border-transparent focus:border-blue-500">
+            <i class="fa fa-search absolute right-4 top-4 text-gray-400"></i>
+        </div>
+        <div class="flex justify-between items-center px-1">
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Total Antrean Aktif</p>
+            <span id="orderCount" class="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">78 Pesanan</span>
+        </div>
+    </div>
+
+    <div id="orderList" class="pb-24">
+        <div class="order-card">
+            <div class="flex justify-between items-start mb-3">
+                <div>
+                    <p class="text-[10px] text-red-600 font-extrabold uppercase">Jatirahayu (Cluster Taman Jatirahayu)</p>
+                    <h3 class="font-bold text-lg">Samuel Bago</h3>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="text-[11px] text-gray-500 italic">8 Menit lagi</span>
+                        <span id="driverStatus-1" class="hidden status-badge animate-pulse">
+                            <i class="fa fa-motorcycle mr-1"></i> DIANTAR OLEH: <span class="driver-name">OKTA</span>
+                        </span>
                     </div>
                 </div>
-
-                <div class="input-bar">
-                    <div class="input-box">
-                        <i class="fa fa-smile text-gray-400 text-xl"></i>
-                        <input type="text" id="chatInput" placeholder="Ketik pesan" class="bg-transparent flex-1 outline-none text-white text-[16px]">
-                        <label for="mediaInput"><i class="fa fa-paperclip text-gray-400 text-xl -rotate-45"></i></label>
-                        <input type="file" id="mediaInput" class="hidden" onchange="handleMedia(this)">
-                        <i class="fa fa-camera text-gray-400 text-xl ml-2"></i>
-                    </div>
-                    <button onclick="sendChat()" class="circle-btn" id="mainBtn">
-                        <i class="fa fa-microphone text-xl" id="iconBtn"></i>
+                <div class="flex gap-1">
+                    <button class="w-9 h-9 bg-yellow-400 rounded-lg text-white"><i class="fa fa-check"></i></button>
+                    <button onclick="toggleDelivery(1)" class="w-9 h-9 bg-blue-500 rounded-lg text-white shadow-lg active:scale-95 transition-transform">
+                        <i class="fa fa-motorcycle"></i>
                     </button>
                 </div>
             </div>
-
-            <div id="page-myprofile" class="page p-6 bg-[#0b141a]">
-                <div class="flex items-center gap-4 mb-8">
-                    <i onclick="showPage('chat')" class="fa fa-arrow-left text-gray-400 text-xl"></i>
-                    <h2 class="text-xl font-bold">Profil</h2>
-                </div>
-                <div class="flex flex-col items-center">
-                    <div id="myBigImg" class="w-40 h-40 rounded-full overflow-hidden mb-6 border-2 border-gray-700"></div>
-                    <input type="text" id="editName" class="w-full bg-[#202c33] p-4 rounded-lg text-center outline-none" placeholder="Nama Kamu">
-                    <button onclick="saveName()" class="mt-4 bg-[#00a884] px-8 py-3 rounded-full font-bold">SIMPAN</button>
-                </div>
+            
+            <div class="mb-3 hidden" id="housePreview-1">
+                <img src="https://via.placeholder.com/300x150?text=Foto+Rumah+Customer" class="w-full h-32 object-cover rounded-lg border">
             </div>
-        </main>
+
+            <div class="flex gap-2">
+                <button class="btn-action bg-[#005580] text-white">MAPS</button>
+                <button class="btn-action bg-[#25d366] text-white">WA</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="fixed bottom-20 right-5">
+        <button onclick="openModal()" class="w-14 h-14 bg-[#005580] rounded-full text-white shadow-2xl border-4 border-white flex items-center justify-center">
+            <i class="fa fa-plus text-2xl"></i>
+        </button>
+    </div>
+
+    <div id="modal-add" onclick="if(event.target==this) closeModal()">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl">
+            <h2 class="font-black text-[#005580] mb-4 text-center">TAMBAH CUSTOMER</h2>
+            <div class="space-y-3">
+                <input type="text" placeholder="Nama Customer" class="w-full p-3 bg-gray-100 rounded-xl outline-none text-sm">
+                <input type="text" placeholder="Area / Alamat" class="w-full p-3 bg-gray-100 rounded-xl outline-none text-sm">
+                
+                <div class="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center">
+                    <label class="cursor-pointer">
+                        <i class="fa fa-home text-2xl text-gray-400 mb-2"></i>
+                        <p class="text-[10px] text-gray-500">Foto Rumah (Opsional)</p>
+                        <input type="file" class="hidden" accept="image/*" onchange="previewFile(this)">
+                    </label>
+                    <div id="imgPreview" class="hidden mt-2"><img id="targetImg" class="h-20 mx-auto rounded-lg"></div>
+                </div>
+
+                <button class="w-full bg-[#005580] text-white py-3 rounded-xl font-bold shadow-lg">SIMPAN DATA</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        const firebaseConfig = { 
-            apiKey: "AIzaSyAZ7twf8SbcK-HqniDmVqT6k8IM3ehFtgc", 
-            databaseURL: "https://trackcust-jtm-default-rtdb.asia-southeast1.firebasedatabase.app", 
-            projectId: "trackcust-jtm" 
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+        function openModal() { document.getElementById('modal-add').style.display = 'flex'; }
+        function closeModal() { document.getElementById('modal-add').style.display = 'none'; }
 
-        let user = "", partner = "";
-
-        // Fungsi deteksi ketikan untuk ganti Mic -> Send
-        document.getElementById('chatInput').addEventListener('input', function(e) {
-            const icon = document.getElementById('iconBtn');
-            if(e.target.value.trim() !== "") { icon.className = "fa fa-paper-plane"; }
-            else { icon.className = "fa fa-microphone"; }
-        });
-
-        function loadAvatars() {
-            ['Okta', 'Novi'].forEach(n => {
-                db.ref(`profile_data/${n}/photo`).on('value', s => {
-                    const url = s.val() || `https://ui-avatars.com/api/?name=${n}&background=075e54&color=fff`;
-                    if(document.getElementById(`login-img-${n}`)) document.getElementById(`login-img-${n}`).innerHTML = `<img src="${url}" class="w-full h-full object-cover">`;
-                    if(user === n) document.getElementById('myBigImg').innerHTML = `<img src="${url}" class="w-full h-full object-cover">`;
-                    if(partner === n) document.getElementById('partnerImgHead').innerHTML = `<img src="${url}" class="w-full h-full object-cover">`;
-                });
-            });
-        }
-        loadAvatars();
-
-        function loginAs(n) {
-            user = n; partner = n === "Okta" ? "Novi" : "Okta";
-            document.getElementById('loginPage').style.display = 'none';
-            document.getElementById('appHeader').classList.remove('hidden');
-            db.ref(`couple_status/${user}`).set('online');
-            db.ref(`couple_status/${user}`).onDisconnect().set('offline');
-            startChat();
-        }
-
-        function toggleMenu() { document.getElementById('menuDropdown').classList.toggle('show'); }
-        function showPage(id) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById('page-'+id).classList.add('active');
-            document.getElementById('menuDropdown').classList.remove('show');
-        }
-
-        function sendChat() {
-            const i = document.getElementById('chatInput');
-            if(!i.value.trim()) { 
-                alert("Fitur Voice Note akan segera hadir!"); 
-                return; 
+        // Fungsi Preview Foto Rumah
+        function previewFile(input) {
+            const preview = document.getElementById('imgPreview');
+            const target = document.getElementById('targetImg');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    target.src = e.target.result;
+                    preview.classList.remove('hidden');
+                }
+                reader.readAsDataURL(input.files[0]);
             }
-            db.ref('couple_chats').push({
-                sender: user, text: i.value, type: 'text',
-                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-            });
-            i.value = "";
-            document.getElementById('iconBtn').className = "fa fa-microphone";
         }
 
-        function startChat() {
-            db.ref('couple_chats').on('value', s => {
-                const d = document.getElementById('chatDisplay');
-                // Sisakan hanya pesan enkripsi
-                const notice = d.children[0].outerHTML;
-                d.innerHTML = notice;
-                s.forEach(c => {
-                    const m = c.val();
-                    const time = m.time || "00:00";
-                    d.innerHTML += `
-                        <div class="msg-bubble ${m.sender === user ? 'msg-right' : 'msg-left'}">
-                            ${m.text || ''}
-                            <span class="msg-time">${time} ${m.sender === user ? '<i class="fa fa-check-double text-blue-400 ml-1"></i>' : ''}</span>
-                        </div>`;
-                });
-                d.scrollTop = d.scrollHeight;
-            });
+        // Fitur Tombol Motor: Munculkan nama Driver di samping Menit
+        function toggleDelivery(id) {
+            const status = document.getElementById(`driverStatus-${id}`);
+            const driverName = document.getElementById('activeUser').innerText;
+            
+            if(status.classList.contains('hidden')) {
+                status.classList.remove('hidden');
+                status.querySelector('.driver-name').innerText = driverName;
+                alert(`Driver ${driverName} mulai mengantar!`);
+            } else {
+                status.classList.add('hidden');
+            }
         }
     </script>
 </body>
