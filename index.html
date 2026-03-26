@@ -9,96 +9,118 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
-        body { background: #0b141a; color: #e9edef; font-family: sans-serif; overflow: hidden; }
-        .page { display: none; height: 100vh; flex-direction: column; }
+        body { background: #000; color: #e9edef; font-family: sans-serif; overflow: hidden; display: flex; justify-content: center; }
+        /* Pembatas Agar Tampilan Tidak Melebar Seperti Komputer */
+        .app-container { width: 100%; max-width: 450px; height: 100vh; background: #0b141a; position: relative; display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .page { display: none; height: 100%; flex-direction: column; overflow: hidden; }
         .page.active { display: flex; }
-        .msg-bubble { max-width: 75%; padding: 6px 10px; border-radius: 8px; margin-bottom: 4px; font-size: 13px; }
-        .msg-left { background: #202c33; align-self: flex-start; border-top-left-radius: 0; }
-        .msg-right { background: #005c4b; align-self: flex-end; border-top-right-radius: 0; }
-        .msg-media { width: 100%; border-radius: 5px; margin-top: 2px; }
-        .dropdown { display: none; position: absolute; right: 10px; top: 50px; background: #233138; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); z-index: 100; min-width: 160px; }
+        .msg-bubble { max-width: 80%; padding: 8px 12px; border-radius: 12px; margin-bottom: 6px; font-size: 14px; line-height: 1.4; }
+        .msg-left { background: #202c33; align-self: flex-start; border-top-left-radius: 2px; }
+        .msg-right { background: #005c4b; align-self: flex-end; border-top-right-radius: 2px; }
+        .msg-media { width: 100%; border-radius: 8px; margin-top: 4px; border: 1px solid rgba(255,255,255,0.1); }
+        .dropdown { display: none; position: absolute; right: 10px; top: 55px; background: #233138; border-radius: 8px; z-index: 100; min-width: 180px; box-shadow: 0 8px 16px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); }
         .dropdown.show { display: block; }
-        .dropdown-item { padding: 12px 16px; font-size: 14px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .dropdown-item:last-child { border: none; }
+        .dropdown-item { padding: 14px 16px; font-size: 14px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s; }
+        .dropdown-item:active { background: #182229; }
     </style>
 </head>
 <body>
-    <div id="loginPage" class="flex flex-col items-center justify-center h-screen p-6">
-        <h1 class="text-xl font-bold mb-8 text-pink-500 italic uppercase">JTM Love Space</h1>
-        <div class="grid grid-cols-2 gap-6 w-full max-w-[260px]">
-            <button onclick="loginAs('Okta')" class="flex flex-col items-center">
-                <div id="login-img-Okta"></div><span class="text-[10px] font-bold mt-2">OKTA</span>
-            </button>
-            <button onclick="loginAs('Novi')" class="flex flex-col items-center">
-                <div id="login-img-Novi"></div><span class="text-[10px] font-bold mt-2">NOVI</span>
-            </button>
+    <div class="app-container">
+        <div id="loginPage" class="flex flex-col items-center justify-center h-full p-8 text-center bg-[#0b141a]">
+            <h1 class="text-2xl font-black italic mb-12 text-pink-500 tracking-tighter">JTM LOVE SPACE</h1>
+            <div class="grid grid-cols-2 gap-8 w-full">
+                <button onclick="loginAs('Okta')" class="flex flex-col items-center group">
+                    <div id="login-img-Okta" class="w-20 h-20 rounded-full border-2 border-blue-500 overflow-hidden mb-3"></div>
+                    <span class="text-xs font-bold uppercase tracking-widest text-blue-400">Okta</span>
+                </button>
+                <button onclick="loginAs('Novi')" class="flex flex-col items-center group">
+                    <div id="login-img-Novi" class="w-20 h-20 rounded-full border-2 border-pink-500 overflow-hidden mb-3"></div>
+                    <span class="text-xs font-bold uppercase tracking-widest text-pink-500">Novi</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="mainApp" class="hidden h-full flex flex-col relative">
+            <header class="p-3 flex justify-between items-center bg-[#202c33] z-50">
+                <div class="flex items-center gap-3">
+                    <div id="partnerImgHead" class="w-10 h-10 rounded-full bg-gray-700 overflow-hidden border border-white/10"></div>
+                    <div>
+                        <h2 id="headerPartnerName" class="font-bold text-sm">Partner</h2>
+                        <p id="statusTxt" class="text-[10px] text-[#00a884] font-semibold">online</p>
+                    </div>
+                </div>
+                <div class="relative">
+                    <button onclick="toggleMenu()" class="p-2 text-gray-400 active:text-white"><i class="fa fa-ellipsis-v text-lg"></i></button>
+                    <div id="menuDropdown" class="dropdown">
+                        <div class="dropdown-item" onclick="showPage('myprofile')"><i class="fa fa-user-circle mr-3 text-blue-400"></i> Profil Saya</div>
+                        <div class="dropdown-item" onclick="showPage('game')"><i class="fa fa-gamepad mr-3 text-yellow-400"></i> Game Seru</div>
+                        <div class="dropdown-item" onclick="startVoice()"><i class="fa fa-phone-alt mr-3 text-pink-500"></i> Chat Suara</div>
+                    </div>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-hidden relative bg-[#0b141a] bg-[url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')] bg-repeat bg-opacity-5">
+                <div id="page-chat" class="page active flex flex-col p-3 h-full bg-[#0b141a]/90">
+                    <div id="chatDisplay" class="flex-1 overflow-y-auto flex flex-col gap-1 pb-20"></div>
+                    <div class="absolute bottom-4 left-3 right-3 flex gap-2 items-center">
+                        <div class="flex-1 bg-[#202c33] rounded-full px-4 py-2.5 flex items-center shadow-lg">
+                            <label for="mediaInput" class="cursor-pointer">
+                                <i class="fa fa-paperclip text-gray-400 mr-3 text-lg"></i>
+                                <input type="file" id="mediaInput" class="hidden" accept="image/*,video/*" onchange="handleMedia(this)">
+                            </label>
+                            <input type="text" id="chatInput" placeholder="Ketik pesan" class="bg-transparent flex-1 text-sm outline-none text-white">
+                        </div>
+                        <button onclick="sendChat()" class="bg-[#00a884] w-11 h-11 rounded-full flex items-center justify-center text-white shadow-xl active:scale-90 transition">
+                            <i class="fa fa-paper-plane text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="page-myprofile" class="page p-6 items-center bg-[#0b141a]">
+                    <button onclick="showPage('chat')" class="self-start mb-8 text-sm text-pink-500 font-bold"><i class="fa fa-arrow-left"></i> Kembali</button>
+                    <div class="relative mb-8">
+                        <div id="myBigImg" class="w-32 h-32 rounded-full overflow-hidden border-4 border-[#00a884]"></div>
+                        <label for="profEdit" class="absolute bottom-1 right-1 bg-[#00a884] p-2.5 rounded-full cursor-pointer border-4 border-[#0b141a]">
+                            <i class="fa fa-camera text-white text-xs"></i>
+                            <input type="file" id="profEdit" class="hidden" accept="image/*" onchange="updatePhoto(this)">
+                        </label>
+                    </div>
+                    <div class="w-full space-y-5">
+                        <div class="bg-[#202c33] p-4 rounded-xl border border-white/5">
+                            <p class="text-[10px] text-gray-400 uppercase font-bold mb-1">Nama Tampilan</p>
+                            <input type="text" id="editName" class="w-full bg-transparent text-white text-base font-bold outline-none" placeholder="Masukkan nama...">
+                        </div>
+                        <button onclick="saveName()" class="w-full bg-[#00a884] py-4 rounded-xl font-black text-xs tracking-widest shadow-lg">SIMPAN PROFIL</button>
+                    </div>
+                </div>
+
+                <div id="page-game" class="page p-6 bg-[#0b141a]">
+                    <button onclick="showPage('chat')" class="mb-6 text-sm text-pink-500 font-bold"><i class="fa fa-arrow-left"></i> Kembali</button>
+                    <div onclick="showPage('xoxo')" class="bg-[#202c33] p-6 rounded-2xl flex justify-between items-center shadow-lg border border-white/5 active:scale-95 transition">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center text-yellow-500 text-xl"><i class="fa fa-gamepad"></i></div>
+                            <span class="font-bold">Tic Tac Toe (XOXO)</span>
+                        </div>
+                        <i class="fa fa-chevron-right text-gray-500 text-xs"></i>
+                    </div>
+                </div>
+
+                <div id="page-xoxo" class="page p-6 items-center bg-[#0b141a]">
+                    <button onclick="showPage('game')" class="self-start mb-10 text-sm text-pink-500 font-bold"><i class="fa fa-arrow-left"></i> Kembali</button>
+                    <div class="grid grid-cols-3 gap-3 w-full max-w-[280px] p-4 bg-[#202c33] rounded-2xl shadow-2xl" id="boardXOXO"></div>
+                    <button onclick="db.ref('game/xoxo').remove()" class="mt-12 text-[10px] font-black text-gray-500 tracking-[0.3em] uppercase">Reset Papan Game</button>
+                </div>
+            </main>
         </div>
     </div>
 
-    <div id="mainApp" class="hidden h-screen flex flex-col relative">
-        <header class="p-3 flex justify-between items-center bg-[#202c33] z-50">
-            <div class="flex items-center gap-3">
-                <div id="partnerImgHead"></div>
-                <div>
-                    <h2 id="headerPartnerName" class="font-bold text-sm text-white">Partner</h2>
-                    <p id="statusTxt" class="text-[10px] text-gray-400">offline</p>
-                </div>
-            </div>
-            <div class="relative">
-                <button onclick="toggleMenu()" class="p-2 text-gray-400"><i class="fa fa-ellipsis-v"></i></button>
-                <div id="menuDropdown" class="dropdown">
-                    <div class="dropdown-item" onclick="showPage('myprofile')"><i class="fa fa-user mr-3 text-blue-400"></i> Profil Saya</div>
-                    <div class="dropdown-item" onclick="showPage('game')"><i class="fa fa-gamepad mr-3 text-yellow-400"></i> Game</div>
-                    <div class="dropdown-item" onclick="startVoice()"><i class="fa fa-microphone mr-3 text-pink-500"></i> Chat Suara</div>
-                </div>
-            </div>
-        </header>
-
-        <main class="flex-1 overflow-hidden relative bg-[#0b141a]">
-            <div id="page-chat" class="page active flex flex-col p-3 h-full">
-                <div id="chatDisplay" class="flex-1 overflow-y-auto flex flex-col gap-1 pb-20"></div>
-                <div class="absolute bottom-2 left-2 right-2 flex gap-2 items-center">
-                    <div class="flex-1 bg-[#202c33] rounded-full px-3 py-2 flex items-center">
-                        <label for="mediaInput" class="cursor-pointer"><i class="fa fa-paperclip text-gray-400 mr-3"></i></label>
-                        <input type="file" id="mediaInput" class="hidden" accept="image/*,video/*" onchange="handleMedia(this)">
-                        <input type="text" id="chatInput" placeholder="Ketik pesan" class="bg-transparent flex-1 text-sm outline-none">
-                    </div>
-                    <button onclick="sendChat()" class="bg-[#00a884] w-10 h-10 rounded-full flex items-center justify-center"><i class="fa fa-paper-plane text-xs text-white"></i></button>
-                </div>
-            </div>
-
-            <div id="page-myprofile" class="page p-6 items-center">
-                <button onclick="showPage('chat')" class="self-start mb-6 text-xs text-pink-500"><i class="fa fa-arrow-left"></i> Kembali</button>
-                <h2 class="text-lg font-bold mb-6">Sunting Profil</h2>
-                <div class="relative mb-6">
-                    <div id="myBigImg"></div>
-                    <label for="profEdit" class="absolute bottom-0 right-0 bg-[#00a884] p-2 rounded-full cursor-pointer border-2 border-[#0b141a]"><i class="fa fa-camera text-xs"></i></label>
-                    <input type="file" id="profEdit" class="hidden" onchange="updatePhoto(this)">
-                </div>
-                <div class="w-full space-y-4">
-                    <input type="text" id="editName" class="w-full bg-[#202c33] p-3 rounded-lg text-sm outline-none" placeholder="Ubah Nama">
-                    <button onclick="saveName()" class="w-full bg-[#00a884] p-3 rounded-lg font-bold text-sm">SIMPAN PERUBAHAN</button>
-                </div>
-            </div>
-
-            <div id="page-game" class="page p-6">
-                <button onclick="showPage('chat')" class="mb-4 text-xs text-pink-500"><i class="fa fa-arrow-left"></i> Kembali</button>
-                <div onclick="showPage('xoxo')" class="bg-[#202c33] p-5 rounded-xl flex justify-between items-center shadow-lg">
-                    <span class="font-bold">Tic Tac Toe (XOXO)</span>
-                    <i class="fa fa-play-circle text-2xl text-[#00a884]"></i>
-                </div>
-            </div>
-
-            <div id="page-xoxo" class="page p-6 items-center">
-                <button onclick="showPage('game')" class="self-start mb-4 text-xs text-pink-500"><i class="fa fa-arrow-left"></i> Kembali</button>
-                <div class="grid grid-cols-3 gap-2 w-full max-w-[240px]" id="boardXOXO"></div>
-                <button onclick="db.ref('game/xoxo').remove()" class="mt-8 text-[10px] text-gray-500 uppercase tracking-widest">Reset Board</button>
-            </div>
-        </main>
-    </div>
-
     <script>
-        const firebaseConfig = { apiKey: "AIzaSyAZ7twf8SbcK-HqniDmVqT6k8IM3ehFtgc", databaseURL: "https://trackcust-jtm-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "trackcust-jtm" };
+        const firebaseConfig = { 
+            apiKey: "AIzaSyAZ7twf8SbcK-HqniDmVqT6k8IM3ehFtgc", 
+            authDomain: "trackcust-jtm.firebaseapp.com",
+            databaseURL: "https://trackcust-jtm-default-rtdb.asia-southeast1.firebasedatabase.app", 
+            projectId: "trackcust-jtm" 
+        };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
@@ -108,13 +130,13 @@
             ['Okta', 'Novi'].forEach(n => {
                 db.ref(`profile_data/${n}/photo`).on('value', s => {
                     const url = s.val() || `https://ui-avatars.com/api/?name=${n}&background=db2777&color=fff`;
-                    if(document.getElementById(`login-img-${n}`)) document.getElementById(`login-img-${n}`).innerHTML = `<img src="${url}" class="w-16 h-16 rounded-full object-cover border-2 border-pink-500">`;
-                    if(user === n) document.getElementById('myBigImg').innerHTML = `<img src="${url}" class="w-32 h-32 rounded-full object-cover border-4 border-[#00a884]">`;
-                    if(partner === n) document.getElementById('partnerImgHead').innerHTML = `<img src="${url}" class="w-9 h-9 rounded-full object-cover">`;
+                    if(document.getElementById(`login-img-${n}`)) document.getElementById(`login-img-${n}`).innerHTML = `<img src="${url}" class="w-full h-full object-cover">`;
+                    if(user === n) document.getElementById('myBigImg').innerHTML = `<img src="${url}" class="w-full h-full object-cover">`;
+                    if(partner === n) document.getElementById('partnerImgHead').innerHTML = `<img src="${url}" class="w-full h-full object-cover">`;
                 });
                 db.ref(`profile_data/${n}/name`).on('value', s => {
-                    const name = s.val() || n;
-                    if(partner === n) document.getElementById('headerPartnerName').innerText = name;
+                    if(partner === n) document.getElementById('headerPartnerName').innerText = s.val() || n;
+                    if(user === n) document.getElementById('editName').value = s.val() || n;
                 });
             });
         }
@@ -132,6 +154,7 @@
         }
 
         function toggleMenu() { document.getElementById('menuDropdown').classList.toggle('show'); }
+        window.onclick = (e) => { if(!e.target.closest('.relative')) document.getElementById('menuDropdown').classList.remove('show'); }
 
         function showPage(id) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -147,8 +170,8 @@
         }
 
         function saveName() {
-            const val = document.getElementById('editName').value;
-            if(val) { db.ref(`profile_data/${user}/name`).set(val); alert("Nama diperbarui!"); }
+            const v = document.getElementById('editName').value;
+            if(v) { db.ref(`profile_data/${user}/name`).set(v); alert("Profil Berhasil Diupdate!"); showPage('chat'); }
         }
 
         function handleMedia(input) {
@@ -159,14 +182,14 @@
         }
 
         function startChat() {
-            db.ref('couple_chats').limitToLast(15).on('value', s => {
+            db.ref('couple_chats').limitToLast(20).on('value', s => {
                 const d = document.getElementById('chatDisplay'); d.innerHTML = "";
                 s.forEach(c => {
                     const m = c.val();
                     let con = m.text || "";
                     if(m.type === 'image') con = `<img src="${m.content}" class="msg-media">`;
                     if(m.type === 'video') con = `<video src="${m.content}" class="msg-media" controls></video>`;
-                    d.innerHTML += `<div class="msg-bubble ${m.sender === user ? 'msg-right' : 'msg-left'}">${con}</div>`;
+                    d.innerHTML += `<div class="msg-bubble ${m.sender === user ? 'msg-right' : 'msg-left'} shadow-sm">${con}</div>`;
                 });
                 d.scrollTop = d.scrollHeight;
             });
@@ -183,15 +206,12 @@
                 const d = s.val() || { board: ["","","","","","","","",""], turn: "Okta" };
                 board = d.board; myTurn = d.turn === user;
                 const c = document.getElementById('boardXOXO'); c.innerHTML = "";
-                board.forEach((v, i) => { c.innerHTML += `<div onclick="move(${i})" class="bg-[#202c33] h-16 flex items-center justify-center text-xl font-bold rounded-lg ${v=='X'?'text-blue-400':'text-pink-400'}">${v}</div>`; });
+                board.forEach((v, i) => { c.innerHTML += `<div onclick="move(${i})" class="bg-[#182229] h-16 flex items-center justify-center text-2xl font-black rounded-xl ${v=='X'?'text-blue-400':'text-pink-500'} shadow-inner">${v}</div>`; });
             });
         }
 
-        function move(i) {
-            if(myTurn && board[i] === "") { board[i] = symbol; db.ref('game/xoxo').set({ board: board, turn: partner }); }
-        }
-
-        function startVoice() { alert("Menghubungkan ke Voice Server Novi..."); }
+        function move(i) { if(myTurn && board[i] === "") { board[i] = symbol; db.ref('game/xoxo').set({ board: board, turn: partner }); } }
+        function startVoice() { alert("Fitur Voice Chat sedang menghubungkan ke HP Novi..."); }
     </script>
 </body>
 </html>
