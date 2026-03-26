@@ -9,41 +9,34 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
-        body { background: #0f172a; color: white; font-family: 'Inter', sans-serif; overflow: hidden; }
+        body { background: #0f172a; color: white; font-family: sans-serif; overflow: hidden; }
         .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .page { display: none; height: 100vh; flex-direction: column; }
         .page.active { display: flex; }
-        .nav-active { color: #f472b6; border-top: 3px solid #f472b6; }
-        .msg-bubble { max-width: 80%; padding: 10px 15px; border-radius: 20px; margin-bottom: 8px; font-size: 14px; position: relative; }
+        .msg-bubble { max-width: 80%; padding: 10px 15px; border-radius: 20px; margin-bottom: 8px; font-size: 14px; }
         .msg-left { background: #334155; align-self: flex-start; border-bottom-left-radius: 2px; }
         .msg-right { background: #db2777; align-self: flex-end; border-bottom-right-radius: 2px; }
-        .online-dot { width: 10px; height: 10px; background: #22c55e; border-radius: 50%; border: 2px solid #0f172a; position: absolute; bottom: 0; right: 0; }
-        .xoxo-cell { height: 100px; display: flex; items-center; justify-center; font-size: 40px; font-weight: 900; background: rgba(255,255,255,0.05); border-radius: 15px; cursor: pointer; }
+        .online-dot { width: 12px; height: 12px; background: #22c55e; border-radius: 50%; border: 2px solid #0f172a; position: absolute; bottom: 0; right: 0; }
+        .xoxo-cell { height: 100px; display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: 900; background: rgba(255,255,255,0.05); border-radius: 15px; }
     </style>
 </head>
 <body>
 
     <div id="loginPage" class="flex flex-col items-center justify-center h-screen p-6 text-center">
         <h1 class="text-4xl font-black italic mb-2 tracking-tighter">LOVE <span class="text-pink-500">SPACE</span></h1>
-        <p class="text-xs font-bold opacity-50 mb-10 uppercase tracking-widest text-pink-300">Private Hub for Okta & Novi</p>
-        <div class="grid grid-cols-2 gap-8 w-full max-w-sm">
+        <div class="grid grid-cols-2 gap-8 w-full max-w-sm mt-10">
             <button onclick="loginAs('Okta')" class="flex flex-col items-center">
-                <div class="w-24 h-24 rounded-full border-4 border-blue-500 overflow-hidden mb-2 shadow-xl shadow-blue-500/20">
-                    <img src="https://ui-avatars.com/api/?name=Okta&background=0D8ABC&color=fff" class="w-full">
-                </div>
-                <span class="font-black italic uppercase text-sm">Okta</span>
+                <img src="https://ui-avatars.com/api/?name=Okta&background=0D8ABC&color=fff" class="w-20 h-20 rounded-full border-4 border-blue-500 mb-2">
+                <span class="font-black italic uppercase text-xs">Okta</span>
             </button>
             <button onclick="loginAs('Novi')" class="flex flex-col items-center">
-                <div class="w-24 h-24 rounded-full border-4 border-pink-500 overflow-hidden mb-2 shadow-xl shadow-pink-500/20">
-                    <img src="https://ui-avatars.com/api/?name=Novi&background=db2777&color=fff" class="w-full">
-                </div>
-                <span class="font-black italic uppercase text-sm">Novi</span>
+                <img src="https://ui-avatars.com/api/?name=Novi&background=db2777&color=fff" class="w-20 h-20 rounded-full border-4 border-pink-500 mb-2">
+                <span class="font-black italic uppercase text-xs">Novi</span>
             </button>
         </div>
     </div>
 
     <div id="mainApp" class="hidden h-screen flex flex-col">
-        
         <header class="p-4 flex justify-between items-center glass">
             <div class="flex items-center gap-3">
                 <div class="relative">
@@ -51,65 +44,50 @@
                     <div id="partnerStatus" class="online-dot hidden"></div>
                 </div>
                 <div>
-                    <h2 id="partnerName" class="font-black italic text-xs uppercase tracking-wider">Lover</h2>
+                    <h2 id="partnerName" class="font-black italic text-xs uppercase">Partner</h2>
                     <p id="statusText" class="text-[9px] font-bold text-gray-400">OFFLINE</p>
                 </div>
             </div>
-            <div class="flex gap-4 items-center">
-                <i class="fa fa-phone text-gray-400"></i>
-                <div class="w-10 h-10 rounded-full bg-pink-500 flex items-center justify-center animate-pulse" id="voiceMic">
-                    <i class="fa fa-microphone text-white"></i>
-                </div>
+            <div id="voiceMic" class="w-10 h-10 rounded-full bg-pink-500 flex items-center justify-center shadow-lg active:scale-150 transition-all">
+                <i class="fa fa-microphone text-white"></i>
             </div>
         </header>
 
         <main class="flex-1 overflow-hidden relative">
-            
             <div id="page-chat" class="page active flex flex-col p-4">
                 <div id="chatDisplay" class="flex-1 overflow-y-auto flex flex-col gap-2 pb-20"></div>
-                <div class="absolute bottom-4 left-4 right-4 flex gap-2 items-center">
-                    <button onclick="document.getElementById('fileInput').click()" class="w-10 h-10 rounded-xl glass flex items-center justify-center text-pink-400"><i class="fa fa-paperclip"></i></button>
-                    <input type="file" id="fileInput" class="hidden" accept="image/*,video/*" onchange="handleMedia(event)">
-                    <input type="text" id="chatInput" placeholder="Ketik sesuatu..." class="flex-1 glass rounded-full px-5 py-3 text-sm outline-none font-bold">
+                <div class="absolute bottom-4 left-4 right-4 flex gap-2">
+                    <input type="text" id="chatInput" placeholder="Ketik pesan..." class="flex-1 glass rounded-full px-5 py-3 text-sm outline-none font-bold">
                     <button onclick="sendChat()" class="bg-pink-600 w-12 h-12 rounded-full flex items-center justify-center shadow-lg"><i class="fa fa-paper-plane"></i></button>
                 </div>
             </div>
 
-            <div id="page-game" class="page p-6 overflow-y-auto text-center">
-                <h2 class="font-black italic text-xl mb-6 tracking-widest">MINI GAMES</h2>
-                <div class="grid grid-cols-1 gap-4">
-                    <div onclick="startGame('xoxo')" class="glass p-6 rounded-[2rem] flex justify-between items-center">
-                        <div class="text-left">
-                            <h3 class="font-black italic">XOXO (TIC TAC TOE)</h3>
-                            <p class="text-[10px] text-pink-400 font-bold uppercase">Duel Otak Berdua</p>
-                        </div>
-                        <i class="fa fa-times text-3xl text-yellow-400"></i>
-                    </div>
-                    <div class="opacity-40 glass p-6 rounded-[2rem] flex justify-between items-center">
-                        <div class="text-left">
-                            <h3 class="font-black italic uppercase">Ular Tangga</h3>
-                            <p class="text-[10px] font-bold">COMING SOON</p>
-                        </div>
-                        <i class="fa fa-dice text-3xl"></i>
-                    </div>
+            <div id="page-game" class="page p-6 overflow-y-auto">
+                <h2 class="font-black italic text-xl mb-6 text-center">MINI GAMES</h2>
+                <div onclick="openXOXO()" class="glass p-6 rounded-[2rem] flex justify-between items-center mb-4">
+                    <span class="font-black italic">XOXO (TIC TAC TOE)</span>
+                    <i class="fa fa-times text-2xl text-yellow-400"></i>
                 </div>
+            </div>
+
+            <div id="page-xoxo" class="page p-6">
+                <button onclick="showPage('game')" class="mb-4 text-xs font-black uppercase text-pink-400"><i class="fa fa-arrow-left"></i> Kembali</button>
+                <p id="statusGame" class="text-center text-xs font-bold mb-4 text-yellow-400 uppercase italic"></p>
+                <div class="grid grid-cols-3 gap-3 glass p-4 rounded-[2rem]" id="boardXOXO"></div>
             </div>
         </main>
 
-        <footer class="glass h-16 flex justify-around items-center px-4">
-            <button onclick="showPage('chat')" id="nav-chat" class="flex flex-col items-center gap-1 nav-active flex-1 py-2">
-                <i class="fa fa-comments text-lg"></i>
-                <span class="text-[8px] font-black uppercase italic">Chat</span>
+        <footer class="glass h-16 flex justify-around items-center">
+            <button onclick="showPage('chat')" class="flex flex-col items-center gap-1 flex-1 py-2 text-pink-400">
+                <i class="fa fa-comments"></i><span class="text-[8px] font-black uppercase italic">Chat</span>
             </button>
-            <button onclick="showPage('game')" id="nav-game" class="flex flex-col items-center gap-1 flex-1 py-2 text-gray-500">
-                <i class="fa fa-gamepad text-lg"></i>
-                <span class="text-[8px] font-black uppercase italic">Game</span>
+            <button onclick="showPage('game')" class="flex flex-col items-center gap-1 flex-1 py-2">
+                <i class="fa fa-gamepad"></i><span class="text-[8px] font-black uppercase italic">Game</span>
             </button>
         </footer>
     </div>
 
     <script>
-        // FIREBASE CONFIG (Sesuai dengan project trackcust-jtm kamu)
         const firebaseConfig = { 
             apiKey: "AIzaSyAZ7twf8SbcK-HqniDmVqT6k8IM3ehFtgc", 
             authDomain: "trackcust-jtm.firebaseapp.com", 
@@ -119,107 +97,88 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let user = ""; 
-        let partner = "";
+        let user = ""; let partner = ""; let symbol = "";
+        let board = ["","","","","","","","",""]; let myTurn = false;
 
         function loginAs(name) {
-            user = name;
-            partner = name === "Okta" ? "Novi" : "Okta";
+            user = name; partner = name === "Okta" ? "Novi" : "Okta";
+            symbol = name === "Okta" ? "X" : "O";
             document.getElementById('loginPage').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
             document.getElementById('partnerName').innerText = partner;
             document.getElementById('partnerAvatar').src = `https://ui-avatars.com/api/?name=${partner}&background=${partner==='Okta'?'0D8ABC':'db2777'}&color=fff`;
             
-            // Set Online Status
-            const presenceRef = db.ref(`couple_status/${user}`);
-            presenceRef.set({ status: 'online', last_seen: Date.now() });
-            presenceRef.onDisconnect().set({ status: 'offline', last_seen: Date.now() });
-
-            // Listen Partner Status
-            db.ref(`couple_status/${partner}`).on('value', snap => {
-                const s = snap.val();
-                if(s && s.status === 'online') {
-                    document.getElementById('partnerStatus').classList.remove('hidden');
-                    document.getElementById('statusText').innerText = "ONLINE SEKARANG";
-                    document.getElementById('statusText').classList.add('text-green-400');
-                } else {
-                    document.getElementById('partnerStatus').classList.add('hidden');
-                    document.getElementById('statusText').innerText = "OFFLINE";
-                    document.getElementById('statusText').classList.remove('text-green-400');
-                }
+            db.ref(`couple_status/${user}`).set({ status: 'online' });
+            db.ref(`couple_status/${user}`).onDisconnect().set({ status: 'offline' });
+            db.ref(`couple_status/${partner}`).on('value', s => {
+                const val = s.val();
+                const dot = document.getElementById('partnerStatus');
+                const txt = document.getElementById('statusText');
+                if(val && val.status === 'online') { dot.classList.remove('hidden'); txt.innerText = "ONLINE"; txt.classList.add('text-green-400'); }
+                else { dot.classList.add('hidden'); txt.innerText = "OFFLINE"; txt.classList.remove('text-green-400'); }
             });
-
-            startChatSystem();
+            startChat();
         }
 
-        // --- CHAT SYSTEM ---
-        function startChatSystem() {
-            db.ref('couple_chats').limitToLast(20).on('value', snap => {
-                const display = document.getElementById('chatDisplay');
-                display.innerHTML = "";
-                snap.forEach(child => {
-                    const c = child.val();
-                    const isMe = c.sender === user;
-                    let content = c.text;
-                    if(c.type === 'image') content = `<img src="${c.url}" class="rounded-xl max-w-full shadow-lg">`;
-                    if(c.type === 'video') content = `<video src="${c.url}" controls class="rounded-xl max-w-full"></video>`;
-                    
-                    display.innerHTML += `
-                        <div class="msg-bubble ${isMe ? 'msg-right' : 'msg-left'}">
-                            ${content}
-                            <div class="text-[7px] mt-1 opacity-50 text-right">${c.time}</div>
-                        </div>`;
+        function startChat() {
+            db.ref('couple_chats').limitToLast(15).on('value', s => {
+                const d = document.getElementById('chatDisplay'); d.innerHTML = "";
+                s.forEach(c => {
+                    const m = c.val();
+                    d.innerHTML += `<div class="msg-bubble ${m.sender === user ? 'msg-right' : 'msg-left'}">${m.text}</div>`;
                 });
-                display.scrollTop = display.scrollHeight;
+                d.scrollTop = d.scrollHeight;
             });
         }
 
         function sendChat() {
-            const inp = document.getElementById('chatInput');
-            if(!inp.value.trim()) return;
-            db.ref('couple_chats').push({
-                sender: user,
-                text: inp.value,
-                type: 'text',
-                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-            });
-            inp.value = "";
+            const i = document.getElementById('chatInput');
+            if(!i.value) return;
+            db.ref('couple_chats').push({ sender: user, text: i.value });
+            i.value = "";
         }
 
-        // --- MEDIA COMPRESS & HANDLE ---
-        async function handleMedia(event) {
-            const file = event.target.files[0];
-            if(!file) return;
-            
-            // Simple Base64 Conversion (Untuk simulasi upload cepat tanpa Firebase Storage berbayar)
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const type = file.type.startsWith('image') ? 'image' : 'video';
-                db.ref('couple_chats').push({
-                    sender: user,
-                    url: e.target.result, // Di dunia nyata ini diupload ke Storage, tapi untuk trial ini oke
-                    type: type,
-                    time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-                });
-            };
-            reader.readAsDataURL(file);
-        }
-
-        // --- NAVIGATION ---
         function showPage(id) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-'+id).classList.add('active');
-            document.querySelectorAll('footer button').forEach(b => b.classList.remove('nav-active', 'text-pink-400'));
-            document.getElementById('nav-'+id).classList.add('nav-active', 'text-pink-400');
         }
 
-        // --- VOICE HAGO STYLE (LOGIC DASAR) ---
-        // Karena WebRTC butuh HTTPS & SSL yang stabil, 
-        // kita mensimulasikan indikator suara saat MIC ditekan
-        const mic = document.getElementById('voiceMic');
-        mic.onmousedown = () => { mic.classList.add('scale-150'); db.ref(`couple_status/${user}`).update({ speaking: true }); };
-        mic.onmouseup = () => { mic.classList.remove('scale-150'); db.ref(`couple_status/${user}`).update({ speaking: false }); };
+        function openXOXO() {
+            showPage('xoxo');
+            db.ref('game/xoxo').on('value', s => {
+                const d = s.val();
+                if(d) { board = d.board; myTurn = d.turn === user; }
+                else { board = ["","","","","","","","",""]; myTurn = (user === "Okta"); }
+                renderBoard();
+            });
+        }
 
+        function renderBoard() {
+            const c = document.getElementById('boardXOXO'); c.innerHTML = "";
+            board.forEach((v, i) => {
+                c.innerHTML += `<div onclick="move(${i})" class="xoxo-cell ${v=='X'?'text-blue-400':'text-pink-400'}">${v}</div>`;
+            });
+            document.getElementById('statusGame').innerText = myTurn ? "Giliranku!" : "Gilirannya...";
+        }
+
+        function move(i) {
+            if(myTurn && board[i] === "") {
+                board[i] = symbol;
+                db.ref('game/xoxo').set({ board: board, turn: partner });
+                checkWinner();
+            }
+        }
+
+        function checkWinner() {
+            const win = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+            for(let p of win) {
+                if(board[p[0]] && board[p[0]]==board[p[1]] && board[p[0]]==board[p[2]]) {
+                    alert("Yey! " + board[p[0]] + " Menang!");
+                    db.ref('game/xoxo').remove();
+                    return;
+                }
+            }
+        }
     </script>
 </body>
 </html>
