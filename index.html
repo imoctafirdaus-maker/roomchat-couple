@@ -1,136 +1,280 @@
-<script>
-    // --- KONFIGURASI FIREBASE ---
-    const firebaseConfig = {
-      apiKey: "AIzaSyAH7DAAnW10vhlf9Fb4FNS--Djq67KUTA0",
-      authDomain: "couple-chat-okta-dan-novi.firebaseapp.com",
-      databaseURL: "https://couple-chat-okta-dan-novi-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "couple-chat-okta-dan-novi",
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    let currentUser = "";
-    let isFirstLoad = true;
-    const audio = document.getElementById('notif-sound');
-
-    // Suara Ping WhatsApp
-    audio.src = "https://raw.githubusercontent.com/Aris-Agustiyan/whatsapp-clone/master/src/assets/sounds/whatsapp_notification.mp3";
-
-    function enableAudioOnFirstClick() {
-        audio.play().then(() => { audio.pause(); audio.currentTime = 0; }).catch(() => {});
-        document.body.removeAttribute('onclick');
-    }
-
-    function loginAs(name) {
-        const pin = prompt(`PIN ${name}:`);
-        const pins = { 'Okta': '14102000', 'Novi': '14112001' };
-        if (pin === pins[name]) {
-            currentUser = name;
-            localStorage.setItem('logged_user', name);
-            enableAudioOnFirstClick();
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('app-interface').style.display = 'flex';
-            startApp();
-        } else { alert("Salah!"); }
-    }
-
-    function startApp() {
-        lucide.createIcons();
-        db.ref(`profiles/${currentUser}`).update({ status: "Online" });
-        db.ref(`profiles/${currentUser}`).onDisconnect().update({ status: "Offline", lastSeen: new Date().toLocaleTimeString() });
-
-        const partner = currentUser === "Okta" ? "Novi" : "Okta";
-        db.ref(`profiles/${partner}`).on('value', s => {
-            const d = s.val() || {};
-            document.getElementById('header-name').innerText = d.name || partner;
-            document.getElementById('header-status').innerText = d.status === "Online" ? "Online" : "Offline";
-        });
-
-        // Sync Chat & Ping
-        db.ref('chats').on('value', s => {
-            const box = document.getElementById('chat-box');
-            const data = s.val();
-            if(data) {
-                box.innerHTML = "";
-                const keys = Object.keys(data);
-                const lastMsg = data[keys[keys.length - 1]];
-                
-                Object.values(data).forEach(m => renderMsg(m));
-                
-                if (!isFirstLoad && lastMsg.sender !== currentUser) {
-                    audio.currentTime = 0;
-                    audio.play().catch(e => console.log("Audio block"));
-                }
-            }
-            isFirstLoad = false;
-            box.scrollTop = box.scrollHeight;
-        });
-    }
-
-    // FUNGSI UTAMA PERBAIKAN TAMPILAN
-    function renderMsg(msg) {
-        const box = document.getElementById('chat-box');
-        const div = document.createElement('div');
-        div.className = `message ${msg.sender === currentUser ? 'sent' : 'received'}`;
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#075e54">
+    <title>WhatsApp Couple Pro</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    
+    <style>
+        :root { --wa-green: #075e54; --wa-light-green: #dcf8c6; --wa-blue: #34b7f1; --bg-chat: #e5ddd5; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
+        html, body { height: 100%; width: 100%; overflow: hidden; position: fixed; background: #000; }
         
-        let contentHTML = "";
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .user-item { padding: 15px; border: 1px solid #ddd; border-radius: 12px; width: 280px; margin-bottom: 12px; display: flex; align-items: center; gap: 15px; cursor: pointer; font-weight: bold; }
+        
+        #app-interface { display: none; height: 100%; flex-direction: column; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-size: contain; }
+        
+        .header { background: var(--wa-green); color: white; padding: 10px 16px; display: flex; align-items: center; gap: 12px; height: 60px; z-index: 100; }
+        .profile-pic { width: 40px; height: 40px; border-radius: 50%; background: #ccc center/cover; cursor: pointer; transition: 0.3s; }
+        .profile-pic.zoom { position: fixed; top: 20%; left: 10%; width: 80vw; height: 80vw; border-radius: 10px; z-index: 1000; box-shadow: 0 0 100px rgba(0,0,0,0.5); }
+        
+        .chat-container { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; }
+        .message { position: relative; max-width: 80%; padding: 6px 10px 18px 10px; margin-bottom: 8px; font-size: 15px; border-radius: 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); word-wrap: break-word; }
+        .received { background: white; align-self: flex-start; border-top-left-radius: 0; }
+        .sent { background: var(--wa-light-green); align-self: flex-end; border-top-right-radius: 0; }
+        
+        .meta { position: absolute; right: 5px; bottom: 2px; display: flex; align-items: center; gap: 3px; }
+        .time { font-size: 10px; color: #888; }
+        .status-icon { width: 14px; height: 14px; }
+        
+        .input-area { background: #f0f0f0; padding: 8px; display: flex; align-items: center; gap: 5px; position: relative; }
+        .input-box { background: white; flex: 1; border-radius: 25px; padding: 5px 12px; display: flex; align-items: center; gap: 10px; }
+        input { border: none; flex: 1; padding: 8px 0; outline: none; font-size: 16px; }
+        
+        .circle-btn { background: #008069; color: white; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; }
+        
+        #emoji-panel, #sticker-panel { display: none; background: white; height: 250px; overflow-y: auto; padding: 10px; grid-template-columns: repeat(6, 1fr); gap: 10px; border-top: 1px solid #ddd; }
+        .emoji-item, .sticker-item { font-size: 24px; text-align: center; cursor: pointer; padding: 5px; }
+        .sticker-item img { width: 100%; border-radius: 5px; }
 
-        // Logika Deteksi Konten: Gambar, Video, atau Teks
-        if (msg.content.includes("data:image") || msg.content.includes("<img")) {
-            // Jika konten adalah base64 gambar atau tag img
-            const src = msg.content.includes("src=\"") ? msg.content.split('src="')[1].split('"')[0] : msg.content;
-            contentHTML = `<img src="${src}" style="width:100%; border-radius:10px; display:block;">`;
-        } 
-        else if (msg.content.includes("data:video") || msg.content.includes("<video")) {
-            // Jika konten adalah base64 video atau tag video
-            const src = msg.content.includes("src=\"") ? msg.content.split('src="')[1].split('"')[0] : msg.content;
-            contentHTML = `<video src="${src}" controls style="width:100%; border-radius:10px; display:block;"></video>`;
-        } 
-        else {
-            // Jika teks biasa
-            contentHTML = `<span>${msg.content}</span>`;
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 500; }
+    </style>
+</head>
+<body onclick="activateAudio()">
+
+    <audio id="notif-sound" src="https://raw.githubusercontent.com/Aris-Agustiyan/whatsapp-clone/master/src/assets/sounds/whatsapp_notification.mp3" preload="auto"></audio>
+    <div class="overlay" id="overlay" onclick="closeZoom()"></div>
+
+    <div id="login-screen">
+        <h3 style="margin-bottom:20px; color:#54656f;">Pilih Akun</h3>
+        <div class="user-item" onclick="loginAs('Okta')">
+            <div style="width:40px; height:40px; border-radius:50%; background:#075e54; color:white; display:flex; align-items:center; justify-content:center;">O</div>
+            Okta Firdaus
+        </div>
+        <div class="user-item" onclick="loginAs('Novi')">
+            <div style="width:40px; height:40px; border-radius:50%; background:#e11d48; color:white; display:flex; align-items:center; justify-content:center;">N</div>
+            Novi
+        </div>
+    </div>
+
+    <div id="app-interface">
+        <div class="header">
+            <div class="profile-pic" id="header-pic" onclick="zoomPic()"></div>
+            <div style="flex:1">
+                <h4 id="header-name">Partner</h4>
+                <span id="header-status" style="font-size:11px; opacity:0.9">Offline</span>
+            </div>
+            <i data-lucide="more-vertical" style="cursor:pointer" onclick="toggleMenu()"></i>
+        </div>
+
+        <div class="chat-container" id="chat-box" onclick="closePanels()"></div>
+
+        <div id="emoji-panel"></div>
+        <div id="sticker-panel"></div>
+
+        <div class="input-area">
+            <div class="input-box">
+                <i data-lucide="smile" style="color:#54656f; cursor:pointer" onclick="toggleEmoji()"></i>
+                <input type="text" id="msg-input" placeholder="Ketik pesan..." oninput="toggleBtn()">
+                <i data-lucide="sticker" style="color:#54656f; cursor:pointer" onclick="toggleSticker()"></i>
+                <label for="file-input"><i data-lucide="paperclip" style="color:#54656f; cursor:pointer"></i></label>
+                <input type="file" id="file-input" hidden accept="image/*" onchange="handleImage(this)">
+            </div>
+            <button class="circle-btn" id="action-btn" onclick="handleAction()">
+                <i data-lucide="mic" id="btn-icon"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+          apiKey: "AIzaSyAH7DAAnW10vhlf9Fb4FNS--Djq67KUTA0",
+          authDomain: "couple-chat-okta-dan-novi.firebaseapp.com",
+          databaseURL: "https://couple-chat-okta-dan-novi-default-rtdb.asia-southeast1.firebasedatabase.app",
+          projectId: "couple-chat-okta-dan-novi",
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let currentUser = "";
+        let isFirstLoad = true;
+        const audio = document.getElementById('notif-sound');
+
+        function activateAudio() {
+            audio.play().then(() => { audio.pause(); audio.currentTime = 0; }).catch(() => {});
+            document.body.removeAttribute('onclick');
         }
 
-        div.innerHTML = `${contentHTML}<div class="msg-meta"><span class="time">${msg.time}</span></div>`;
-        box.appendChild(div);
-    }
+        function loginAs(name) {
+            const pin = prompt(`PIN ${name}:`);
+            const pins = { 'Okta': '14102000', 'Novi': '14112001' };
+            if (pin === pins[name]) {
+                currentUser = name;
+                localStorage.setItem('logged_user', name);
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('app-interface').style.display = 'flex';
+                startApp();
+            } else { alert("PIN Salah!"); }
+        }
 
-    document.getElementById('main-btn').onclick = () => {
-        const inp = document.getElementById('msg-input');
-        if (inp.value.trim()) {
-            db.ref('chats').push({
-                sender: currentUser,
-                content: inp.value,
-                time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-                timestamp: Date.now()
+        function startApp() {
+            lucide.createIcons();
+            initPanels();
+            
+            const partner = currentUser === "Okta" ? "Novi" : "Okta";
+            
+            // Online Status & Last Seen
+            db.ref(`profiles/${currentUser}`).update({ status: "Online" });
+            db.ref(`profiles/${currentUser}`).onDisconnect().update({ 
+                status: `Terakhir dilihat ${new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}` 
             });
-            inp.value = "";
-        }
-    };
 
-    function handleFile(el) {
-        const file = el.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
+            db.ref(`profiles/${partner}`).on('value', s => {
+                const d = s.val() || {};
+                document.getElementById('header-status').innerText = d.status || "Offline";
+                document.getElementById('header-name').innerText = partner;
+            });
+
+            // Listen Chats
+            db.ref('chats').on('value', s => {
+                const box = document.getElementById('chat-box');
+                const data = s.val();
+                box.innerHTML = "";
+                if(data) {
+                    const keys = Object.keys(data);
+                    Object.keys(data).forEach(key => {
+                        const m = data[key];
+                        renderMsg(m, key);
+                        // Tandai sudah dibaca jika penerima adalah saya
+                        if(m.sender !== currentUser && !m.read) {
+                            db.ref(`chats/${key}`).update({ read: true });
+                        }
+                    });
+                    
+                    const lastMsg = data[keys[keys.length - 1]];
+                    if (!isFirstLoad && lastMsg.sender !== currentUser) {
+                        audio.play();
+                    }
+                }
+                isFirstLoad = false;
+                box.scrollTop = box.scrollHeight;
+            });
+        }
+
+        function renderMsg(msg, id) {
+            const box = document.getElementById('chat-box');
+            const div = document.createElement('div');
+            div.className = `message ${msg.sender === currentUser ? 'sent' : 'received'}`;
+            
+            let html = msg.content;
+            if(msg.type === 'image') html = `<img src="${msg.content}" style="width:100%; border-radius:8px;">`;
+            if(msg.type === 'sticker') html = `<img src="${msg.content}" style="width:120px;">`;
+            if(msg.type === 'vn') html = `<audio controls style="width:200px; height:30px;"><source src="${msg.content}"></audio>`;
+
+            const statusIcon = msg.read ? 
+                `<i data-lucide="check-check" style="color:var(--wa-blue); width:14px;"></i>` : 
+                `<i data-lucide="check" style="color:#888; width:14px;"></i>`;
+
+            div.innerHTML = `
+                ${html}
+                <div class="meta">
+                    <span class="time">${msg.time}</span>
+                    ${msg.sender === currentUser ? statusIcon : ''}
+                </div>
+            `;
+            box.appendChild(div);
+            lucide.createIcons();
+        }
+
+        function toggleBtn() {
+            const val = document.getElementById('msg-input').value;
+            document.getElementById('btn-icon').setAttribute('data-lucide', val ? 'send-horizontal' : 'mic');
+            lucide.createIcons();
+        }
+
+        function handleAction() {
+            const inp = document.getElementById('msg-input');
+            if(inp.value.trim()) {
                 db.ref('chats').push({
                     sender: currentUser,
-                    content: e.target.result, // Simpan data murni, renderMsg yang akan mengolahnya
+                    content: inp.value,
+                    type: 'text',
                     time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-                    timestamp: Date.now()
+                    read: false
                 });
-            };
-            reader.readAsDataURL(file);
+                inp.value = "";
+                toggleBtn();
+            } else {
+                alert("Fitur Voice Note memerlukan izin mikrofon (Simulasi)");
+            }
         }
-    }
 
-    window.onload = () => {
-        const saved = localStorage.getItem('logged_user');
-        if (saved) { 
-            currentUser = saved; 
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('app-interface').style.display = 'flex';
-            startApp();
+        function handleImage(el) {
+            const file = el.files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    db.ref('chats').push({
+                        sender: currentUser,
+                        content: e.target.result,
+                        type: 'image',
+                        time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+                        read: false
+                    });
+                };
+                reader.readAsDataURL(file);
+            }
         }
-    };
-</script>
+
+        // Fitur Visual & Panels
+        function initPanels() {
+            const emojis = ["😊","😂","❤️","😍","🙏","👍","🔥","😭","😘","✨","🤣","😊"];
+            const ePanel = document.getElementById('emoji-panel');
+            emojis.forEach(e => {
+                const span = document.createElement('div');
+                span.className = "emoji-item";
+                span.innerText = e;
+                span.onclick = () => { document.getElementById('msg-input').value += e; toggleBtn(); };
+                ePanel.appendChild(span);
+            });
+        }
+
+        function zoomPic() {
+            document.getElementById('header-pic').classList.toggle('zoom');
+            document.getElementById('overlay').style.display = 'block';
+        }
+
+        function closeZoom() {
+            document.getElementById('header-pic').classList.remove('zoom');
+            document.getElementById('overlay').style.display = 'none';
+        }
+
+        function toggleEmoji() {
+            const p = document.getElementById('emoji-panel');
+            p.style.display = p.style.display === 'grid' ? 'none' : 'grid';
+            document.getElementById('sticker-panel').style.display = 'none';
+        }
+
+        function toggleSticker() {
+            const p = document.getElementById('sticker-panel');
+            p.style.display = p.style.display === 'grid' ? 'none' : 'grid';
+            document.getElementById('emoji-panel').style.display = 'none';
+        }
+
+        function closePanels() {
+            document.getElementById('emoji-panel').style.display = 'none';
+            document.getElementById('sticker-panel').style.display = 'none';
+        }
+
+        window.onload = () => {
+            const saved = localStorage.getItem('logged_user');
+            if(saved) { currentUser = saved; document.getElementById('login-screen').style.display = 'none'; document.getElementById('app-interface').style.display = 'flex'; startApp(); }
+        };
+    </script>
+</body>
+</html>
