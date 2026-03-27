@@ -67,6 +67,8 @@
 </head>
 <body>
 
+    <audio id="notif-sound" src="https://raw.githubusercontent.com/Aris-Agustiyan/whatsapp-clone/master/src/assets/sounds/whatsapp_notification.mp3" preload="auto"></audio>
+
     <div id="login-screen">
         <div class="login-logo"></div>
         <div class="login-title">Siapa Anda?</div>
@@ -96,8 +98,21 @@
             </div>
         </div>
 
-        <div id="preview-overlay" onclick="this.style.display='none'">
-            <img id="preview-img" style="max-width:90%; max-height:80%; border-radius:10px;">
+        <div id="preview-overlay">
+            <div style="position: relative; width: 90%; height: 80%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <img id="preview-img" style="max-width:100%; max-height:100%; border-radius:10px; object-fit: contain;">
+                <div style="margin-top: 20px; display: flex; gap: 20px;">
+                    <button onclick="downloadImage()" style="background: white; border: none; padding: 10px; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                        <i data-lucide="download" color="#075e54"></i>
+                    </button>
+                    <button onclick="shareImage()" style="background: white; border: none; padding: 10px; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                        <i data-lucide="share-2" color="#075e54"></i>
+                    </button>
+                    <button onclick="document.getElementById('preview-overlay').style.display='none'" style="background: #ff4b4b; border: none; padding: 10px; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                        <i data-lucide="x" color="white"></i>
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div class="header">
@@ -141,29 +156,33 @@
         const emojiPanel = document.getElementById('emoji-panel');
         let currentUser = "";
 
-        // --- STORAGE ---
+        const userPins = {
+            'Okta': '14102000',
+            'Novi': '14112001'
+        };
+
         function saveToLocal(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
         function getFromLocal(key) { const data = localStorage.getItem(key); return data ? JSON.parse(data) : null; }
 
-        // --- LOGIN & PROFILE LOGIC (FIXED) ---
         function loginAs(name) {
-            currentUser = name;
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('app-interface').style.display = 'flex';
-            document.getElementById('settings-title').innerText = `Profil ${currentUser}`;
-            loadProfile();
-            loadChatHistory();
+            const enteredPin = prompt(`Masukkan PIN untuk ${name}:`);
+            if (enteredPin === userPins[name]) {
+                currentUser = name;
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('app-interface').style.display = 'flex';
+                document.getElementById('settings-title').innerText = `Profil ${currentUser}`;
+                loadProfile();
+                loadChatHistory();
+            } else {
+                alert("PIN Salah! Akses ditolak.");
+            }
         }
 
         function loadProfile() {
-            // Tentukan siapa partnernya
             const partner = (currentUser === "Okta") ? "Novi" : "Okta";
-            
-            // Ambil data partner dari storage
             const partnerName = getFromLocal(`name_${partner}`) || (partner === "Novi" ? "Novi ❤️" : "Okta Firdaus");
             const partnerPic = getFromLocal(`pic_${partner}`);
             
-            // Tampilkan data partner di header (karena ini chat dengan partner)
             document.getElementById('header-name').innerText = partnerName;
             if(partnerPic) {
                 document.getElementById('header-pic').style.backgroundImage = `url('${partnerPic}')`;
@@ -171,29 +190,25 @@
                 document.getElementById('header-pic').style.backgroundImage = "none";
             }
             
-            // Update foto di login screen agar sinkron
             const oktaPic = getFromLocal('pic_Okta');
             const noviPic = getFromLocal('pic_Novi');
             if(oktaPic) document.getElementById('login-pic-okta').style.backgroundImage = `url('${oktaPic}')`;
             if(noviPic) document.getElementById('login-pic-novi').style.backgroundImage = `url('${noviPic}')`;
         }
 
-        // Fungsi mengganti foto diri sendiri
         function updateMyProfilePic(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const picData = e.target.result;
-                    // Simpan sebagai foto profil diri sendiri
                     saveToLocal(`pic_${currentUser}`, picData);
                     alert("Foto profil kamu berhasil diubah!");
-                    loadProfile(); // Refresh tampilan
+                    loadProfile();
                 };
                 reader.readAsDataURL(input.files[0]);
             }
         }
 
-        // Fungsi mengganti nama diri sendiri
         function saveMyProfileSettings() {
             const newName = document.getElementById('new-name-input').value;
             if(newName.trim() !== "") {
@@ -204,7 +219,6 @@
             document.getElementById('settings-modal').style.display = 'none';
         }
 
-        // --- CHAT SYSTEM ---
         function loadChatHistory() {
             chatBox.innerHTML = "";
             const history = getFromLocal('chat_history') || [];
@@ -220,6 +234,10 @@
             history.push({ sender: currentUser, content: content, time: time });
             saveToLocal('chat_history', history);
             renderMsg(content, type, time);
+            
+            const audio = document.getElementById('notif-sound');
+            audio.currentTime = 0;
+            audio.play().catch(e => console.log("Gagal putar suara:", e));
         }
 
         function renderMsg(content, type, time) {
@@ -235,7 +253,6 @@
             if(confirm("Hapus semua riwayat?")) { localStorage.clear(); location.reload(); }
         }
 
-        // --- CONTROLS ---
         input.addEventListener('input', () => {
             btnIcon.setAttribute('data-lucide', input.value.trim() !== "" ? 'send-horizontal' : 'mic');
             lucide.createIcons();
@@ -268,9 +285,32 @@
         function showFullImg(src) {
             document.getElementById('preview-img').src = src;
             document.getElementById('preview-overlay').style.display = 'flex';
+            lucide.createIcons();
         }
 
-        const emojis = ["😀","😃","😄","😁","😆","😅","😂","🤣","😊","😇","🙂","🙃","😉","😌","😍","🥰","😘","😗","😙","😚","😋","😛","😝","😜","🤪","🤨","🧐","🤓","😎","🤩","🥳","😏","😒","😞","😔","😟","😕","🙁","☹️","😣","😖","😫","😩","🥺","😢","😭","😤","😠","😡","🤬","🤯","😳","🥵","🥶","😱","😨","😰","😥","😓","🤗","🤔","🤭","🤫","🤥","😶","😐","😑","😬","🙄","😯","😦","😧","😮","😲","🥱","😴","🤤","😪","😵","🤐","🥴","🤢","🤮","🤧","😷","🤒","🤕","🤑","🤠","😈","👿","👹","👺","🤡","💩","👻","💀","☠️","👽","👾","🤖","🎃","😺","😸","😹","😻","😼","😽","🙀","😿","😾","❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟"];
+        function downloadImage() {
+            const imgSrc = document.getElementById('preview-img').src;
+            const link = document.createElement('a');
+            link.href = imgSrc;
+            link.download = `WA_Couple_${Date.now()}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        async function shareImage() {
+            const imgSrc = document.getElementById('preview-img').src;
+            if (navigator.share) {
+                try {
+                    const res = await fetch(imgSrc);
+                    const blob = await res.blob();
+                    const file = new File([blob], "foto.png", { type: blob.type });
+                    await navigator.share({ files: [file], title: 'Bagikan Foto' });
+                } catch (err) { console.log("Gagal berbagi:", err); }
+            } else { alert("Browser tidak mendukung share."); }
+        }
+
+        const emojis = ["😀","😃","😄","😁","😆","😅","😂","🤣","😊","😇","🙂","🙃","😉","😌","😍","🥰","😘","😗","😙","😚","😋","😛","😝","😜","🤪","🤨","🧐","🤓","😎","🤩","🥳","😏","😒","😞","😔","😟","😕","🙁","☹️","😣","😖","😫","😩","🥺","😢","😭","😤","😠","😡","🤬","🤯","😳","🥵","🥶","😱","😨","😰","😥","😓","🤗","🤔","🤭","🤫","🤥","😶","😐","😑","😬","🙄","😯","😦","😧","😮","😲","🥱","😴","🤤","😪","😵","🤐","🥴","🤢","🤮","🤧","😷","🤒","🤕","🤑","🤠","😈","👿","👹","👺","🤡","💩","Ghosts","💀","☠️","👽","👾","🤖","🎃","😺","😸","😹","😻","😼","😽","🙀","😿","😾","❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟"];
         emojis.forEach(e => {
             const span = document.createElement('span');
             span.className = 'emoji-item';
@@ -309,7 +349,6 @@
         input.addEventListener("keypress", (e) => { if(e.key === "Enter") mainBtn.click(); });
 
         window.onload = function() {
-            // Load foto di login screen saat pertama kali buka
             const oktaPic = getFromLocal('pic_Okta');
             const noviPic = getFromLocal('pic_Novi');
             if(oktaPic) document.getElementById('login-pic-okta').style.backgroundImage = `url('${oktaPic}')`;
