@@ -23,7 +23,6 @@
         .header { background: var(--wa-green); color: white; padding: 10px 16px; display: flex; align-items: center; gap: 12px; height: 60px; z-index: 100; position: relative; }
         .profile-pic { width: 40px; height: 40px; border-radius: 50%; background: #ccc center/cover; cursor: pointer; transition: 0.3s; border: 1px solid rgba(255,255,255,0.2); }
         
-        /* PERBAIKAN: Z-Index Zoom agar tidak gelap */
         .profile-pic.zoom { 
             position: fixed; 
             top: 50%; 
@@ -59,7 +58,6 @@
         .emoji-item { font-size: 26px; text-align: center; cursor: pointer; padding: 5px; }
         .sticker-item { width: 100%; aspect-ratio: 1/1; object-fit: cover; cursor: pointer; border-radius: 5px; }
         
-        /* PERBAIKAN: Overlay di bawah Foto Zoom */
         .overlay { 
             display: none; 
             position: fixed; 
@@ -75,7 +73,8 @@
         .menu-item { padding: 12px 15px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 10px; border-radius: 5px; }
 
         audio.vn-msg { height: 35px; width: 200px; margin-top: 5px; }
-        .sticker-msg { width: 130px; height: 130px; display: block; }
+        .sticker-msg, .chat-img { width: 130px; display: block; border-radius: 8px; cursor: pointer; }
+        .chat-img { width: 100%; }
     </style>
 </head>
 <body onclick="activateAudio()">
@@ -158,6 +157,18 @@
         function activateAudio() { audio.play().then(() => { audio.pause(); audio.currentTime = 0; }).catch(() => {}); document.body.removeAttribute('onclick'); }
         function getTime() { return new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); }
 
+        // --- FITUR BARU: SAVE GAMBAR ---
+        function saveImage(url) {
+            if(confirm("Simpan gambar ke galeri?")) {
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `WhatsApp_Image_${Date.now()}.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
         window.onload = () => {
             const savedUser = localStorage.getItem('logged_user_oknov');
             if(savedUser) {
@@ -192,12 +203,10 @@
             initStickers();
             const partner = currentUser === "Okta" ? "Novi" : "Okta";
             
-            // ONLINE STATUS
             const userStatusRef = db.ref(`profiles/${currentUser}`);
             userStatusRef.update({ status: "Online" });
             userStatusRef.onDisconnect().update({ status: `Terakhir dilihat ${getTime()}` });
 
-            // PARTNER STATUS
             db.ref(`profiles/${partner}`).on('value', s => {
                 const d = s.val() || {};
                 document.getElementById('header-status').innerText = d.status || "Offline";
@@ -205,7 +214,6 @@
                 if(d.pic) document.getElementById('header-pic').style.backgroundImage = `url(${d.pic})`;
             });
 
-            // CHAT LOGIC
             db.ref('chats').on('value', s => {
                 const box = document.getElementById('chat-box');
                 const data = s.val();
@@ -222,9 +230,10 @@
                         div.ontouchend = () => clearTimeout(timer);
 
                         let content = `<span>${m.content}</span>`;
-                        if(m.type === 'image') content = `<img src="${m.content}" style="width:100%; border-radius:8px;">`;
+                        // Ditambahkan onclick="saveImage" untuk gambar dan stiker
+                        if(m.type === 'image') content = `<img src="${m.content}" class="chat-img" onclick="saveImage('${m.content}')">`;
                         if(m.type === 'vn') content = `<audio controls class="vn-msg"><source src="${m.content}"></audio>`;
-                        if(m.type === 'sticker') content = `<img src="${m.content}" class="sticker-msg">`;
+                        if(m.type === 'sticker') content = `<img src="${m.content}" class="sticker-msg" onclick="saveImage('${m.content}')">`;
 
                         const status = m.read ? `<i data-lucide="check-check" style="color:var(--wa-blue); width:14px;"></i>` : `<i data-lucide="check" style="color:#888; width:14px;"></i>`;
                         div.innerHTML = `${content}<div class="meta"><span class="time">${m.time}</span>${m.sender === currentUser ? status : ''}</div>`;
@@ -243,6 +252,7 @@
         }
 
         function confirmDelete(key) { if(confirm("Hapus pesan ini?")) db.ref(`chats/${key}`).remove(); }
+        
         function handleAction() {
             const inp = document.getElementById('msg-input');
             if(inp.value.trim()) {
@@ -250,6 +260,7 @@
                 inp.value = ""; toggleBtn();
             }
         }
+
         function handleImage(el) {
             const file = el.files[0];
             if(file) {
@@ -258,6 +269,7 @@
                 r.readAsDataURL(file);
             }
         }
+
         function uploadSticker(el) {
             const file = el.files[0];
             if(file) {
@@ -266,6 +278,7 @@
                 r.readAsDataURL(file);
             }
         }
+
         function initStickers() {
             db.ref('custom_stickers').on('value', s => {
                 const cont = document.getElementById('sticker-content');
@@ -279,6 +292,7 @@
                 });
             });
         }
+
         async function startRecording() {
             if(document.getElementById('msg-input').value.trim()) return;
             try {
@@ -295,19 +309,24 @@
                 document.getElementById('action-btn').style.background = 'red';
             } catch (err) { alert("Mic Error"); }
         }
+
         function stopRecording() { if(mediaRecorder && mediaRecorder.state === "recording") { mediaRecorder.stop(); document.getElementById('action-btn').style.background = '#008069'; } }
+        
         function toggleBtn() { document.getElementById('btn-icon').setAttribute('data-lucide', document.getElementById('msg-input').value.trim() ? 'send-horizontal' : 'mic'); lucide.createIcons(); }
+        
         function toggleEmoji() { const p = document.getElementById('emoji-panel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; }
+        
         function switchTab(t) { 
             document.getElementById('emoji-content').style.display = t === 'emoji' ? 'grid' : 'none';
             document.getElementById('sticker-content').style.display = t === 'sticker' ? 'grid' : 'none';
             document.getElementById('tab-emoji').classList.toggle('tab-active', t === 'emoji');
             document.getElementById('tab-sticker').classList.toggle('tab-active', t === 'sticker');
         }
+
         function closePanels() { document.getElementById('emoji-panel').style.display = 'none'; document.getElementById('menu-dropdown').style.display = 'none'; }
+        
         function toggleMenu(e) { e.stopPropagation(); const m = document.getElementById('menu-dropdown'); m.style.display = m.style.display === 'block' ? 'none' : 'block'; }
         
-        // PERBAIKAN: Fungsi zoomPic agar foto di tengah
         function zoomPic() { 
             document.getElementById('header-pic').classList.add('zoom'); 
             document.getElementById('overlay').style.display = 'block'; 
@@ -319,8 +338,9 @@
         }
         
         function updateProfilePic(el) { if(el.files[0]) { const r = new FileReader(); r.onload = e => db.ref(`profiles/${currentUser}`).update({ pic: e.target.result }); r.readAsDataURL(el.files[0]); } }
+        
         function initEmoji() {
-            const emojis = ["😊","😂","🤣","❤️","😍","😘","🥰","😇","😋","😛","😜","🤪","🤨","🧐","🤔","🤫","🫠","🫣","🫢","🫡","🤩","🥳","🥵","🥶","🥺","😭","😤","😠","😡","🤬","🤯","😳","🤗","😰","😱","🥱","😴","🤤","🤢","🤮","😎","🤓","🤨","😒","🙄","😬","🤥","😶","😐","😑","🤐","🥴","😵","🙌","👏","👋","👍","👎","👊","🙏","🤝","🔥","✨","💯"];
+            const emojis = ["😊","😂","🤣","❤️","😍","😘","🥰","😇","😋","😛","😜","🤪","🤨","🧐","🤔","🤫","🫠","🫣","🫢","🫡","🤩","🥳","🥵","🥶","🥺","😭","😤","😠","😡","🤬","🤯","😳","🤗","😰","😱","🥱","SLEEP","🤤","🤢","🤮","😎","🤓","🤨","😒","🙄","😬","🤥","😶","😐","😑","🤐","🥴","😵","🙌","👏","👋","👍","👎","👊","🙏","🤝","🔥","✨","💯"];
             emojis.forEach(e => {
                 const s = document.createElement('div'); s.className = "emoji-item"; s.innerText = e;
                 s.onclick = () => { document.getElementById('msg-input').value += e; toggleBtn(); };
