@@ -1,211 +1,136 @@
+<script>
+    // --- KONFIGURASI FIREBASE ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyAH7DAAnW10vhlf9Fb4FNS--Djq67KUTA0",
+      authDomain: "couple-chat-okta-dan-novi.firebaseapp.com",
+      databaseURL: "https://couple-chat-okta-dan-novi-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "couple-chat-okta-dan-novi",
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#075e54">
-    <title>WhatsApp Couple Pro</title>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-    
-    <style>
-        :root { --wa-green: #075e54; --wa-light-green: #dcf8c6; --wa-blue: #34b7f1; --bg-chat: #e5ddd5; --wa-dark: #128c7e; }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        html, body { height: 100%; width: 100%; overflow: hidden; position: fixed; }
-        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        .login-logo { width: 80px; height: 80px; border-radius: 20px; background: url('logo.jpg') center/cover; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .user-list { width: 100%; max-width: 300px; display: flex; flex-direction: column; gap: 15px; }
-        .user-item { padding: 15px; border: 1px solid #ddd; border-radius: 10px; display: flex; align-items: center; gap: 15px; cursor: pointer; }
-        #app-interface { display: none; height: 100%; flex-direction: column; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); }
-        .header { background: var(--wa-green); color: white; padding: 10px 16px; display: flex; align-items: center; gap: 12px; height: 60px; }
-        .profile-pic { width: 40px; height: 40px; border-radius: 50%; background: #ccc center/cover; position: relative; }
-        .online-dot { width: 11px; height: 11px; background: #4df03d; border: 2px solid var(--wa-green); border-radius: 50%; position: absolute; bottom: 0; right: 0; }
-        .chat-container { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; }
-        .message { position: relative; max-width: 80%; padding: 8px 12px 22px 12px; margin-bottom: 12px; font-size: 15px; border-radius: 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); word-wrap: break-word; }
-        .received { background: white; align-self: flex-start; border-top-left-radius: 0; }
-        .sent { background: var(--wa-light-green); align-self: flex-end; border-top-right-radius: 0; }
-        .msg-meta { position: absolute; right: 8px; bottom: 4px; display: flex; align-items: center; gap: 4px; }
-        .time { font-size: 10px; color: #888; }
-        .input-area { background: #f0f0f0; padding: 8px; display: flex; align-items: center; gap: 8px; }
-        .input-box { background: white; flex: 1; border-radius: 25px; padding: 5px 12px; display: flex; align-items: center; gap: 8px; }
-        input { border: none; flex: 1; padding: 10px 0; outline: none; font-size: 16px; }
-        .circle-btn { background: #008069; color: white; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; }
-        video, img { border-radius: 10px; max-width: 100%; display: block; margin-top: 5px; }
-        #emoji-panel { display: none; background: white; height: 250px; overflow-y: auto; border-top: 1px solid #ddd; }
-    </style>
-</head>
-<body onclick="enableAudioOnFirstClick()">
+    let currentUser = "";
+    let isFirstLoad = true;
+    const audio = document.getElementById('notif-sound');
 
-    <audio id="notif-sound" preload="auto">
-        <source src="https://raw.githubusercontent.com/Aris-Agustiyan/whatsapp-clone/master/src/assets/sounds/whatsapp_notification.mp3" type="audio/mpeg">
-    </audio>
+    // Suara Ping WhatsApp
+    audio.src = "https://raw.githubusercontent.com/Aris-Agustiyan/whatsapp-clone/master/src/assets/sounds/whatsapp_notification.mp3";
 
-    <div id="login-screen">
-        <div class="login-logo"></div>
-        <h3 style="margin-bottom:20px; color:#54656f;">Siapa Anda?</h3>
-        <div class="user-list">
-            <div class="user-item" onclick="loginAs('Okta')">
-                <div class="user-avatar" style="background-color:#075e54; color:white; display:flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:50%;">O</div>
-                <b>Okta</b>
-            </div>
-            <div class="user-item" onclick="loginAs('Novi')">
-                <div class="user-avatar" style="background-color:#e11d48; color:white; display:flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:50%;">N</div>
-                <b>Novi</b>
-            </div>
-        </div>
-    </div>
+    function enableAudioOnFirstClick() {
+        audio.play().then(() => { audio.pause(); audio.currentTime = 0; }).catch(() => {});
+        document.body.removeAttribute('onclick');
+    }
 
-    <div id="app-interface">
-        <div class="header">
-            <div class="profile-pic" id="header-pic"><div class="online-dot"></div></div>
-            <div style="flex:1">
-                <h4 id="header-name">Partner</h4>
-                <span id="header-status" style="font-size:12px">Offline</span>
-            </div>
-            <i data-lucide="more-vertical" style="cursor:pointer"></i>
-        </div>
+    function loginAs(name) {
+        const pin = prompt(`PIN ${name}:`);
+        const pins = { 'Okta': '14102000', 'Novi': '14112001' };
+        if (pin === pins[name]) {
+            currentUser = name;
+            localStorage.setItem('logged_user', name);
+            enableAudioOnFirstClick();
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app-interface').style.display = 'flex';
+            startApp();
+        } else { alert("Salah!"); }
+    }
 
-        <div class="chat-container" id="chat-box"></div>
+    function startApp() {
+        lucide.createIcons();
+        db.ref(`profiles/${currentUser}`).update({ status: "Online" });
+        db.ref(`profiles/${currentUser}`).onDisconnect().update({ status: "Offline", lastSeen: new Date().toLocaleTimeString() });
 
-        <div class="input-area">
-            <div class="input-box">
-                <i data-lucide="smile" style="color:#54656f"></i>
-                <input type="text" id="msg-input" placeholder="Ketik pesan..." autocomplete="off">
-                <label for="file-input"><i data-lucide="paperclip" style="color:#54656f; cursor:pointer"></i></label>
-                <input type="file" id="file-input" hidden accept="image/*,video/*" onchange="handleFile(this)">
-            </div>
-            <button class="circle-btn" id="main-btn"><i data-lucide="send-horizontal"></i></button>
-        </div>
-    </div>
+        const partner = currentUser === "Okta" ? "Novi" : "Okta";
+        db.ref(`profiles/${partner}`).on('value', s => {
+            const d = s.val() || {};
+            document.getElementById('header-name').innerText = d.name || partner;
+            document.getElementById('header-status').innerText = d.status === "Online" ? "Online" : "Offline";
+        });
 
-    <script>
-        const firebaseConfig = {
-          apiKey: "AIzaSyAH7DAAnW10vhlf9Fb4FNS--Djq67KUTA0",
-          authDomain: "couple-chat-okta-dan-novi.firebaseapp.com",
-          databaseURL: "https://couple-chat-okta-dan-novi-default-rtdb.asia-southeast1.firebasedatabase.app",
-          projectId: "couple-chat-okta-dan-novi",
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-
-        let currentUser = "";
-        let isFirstLoad = true;
-        const audio = document.getElementById('notif-sound');
-
-        function enableAudioOnFirstClick() {
-            audio.play().then(() => { audio.pause(); audio.currentTime = 0; }).catch(() => {});
-            document.body.removeAttribute('onclick');
-        }
-
-        function loginAs(name) {
-            const pin = prompt(`PIN ${name}:`);
-            const pins = { 'Okta': '14102000', 'Novi': '14112001' };
-            if (pin === pins[name]) {
-                currentUser = name;
-                localStorage.setItem('logged_user', name);
-                enableAudioOnFirstClick();
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('app-interface').style.display = 'flex';
-                startApp();
-            } else { alert("Salah!"); }
-        }
-
-        function startApp() {
-            lucide.createIcons();
-            db.ref(`profiles/${currentUser}`).update({ status: "Online" });
-            db.ref(`profiles/${currentUser}`).onDisconnect().update({ status: "Offline", lastSeen: new Date().toLocaleTimeString() });
-
-            const partner = currentUser === "Okta" ? "Novi" : "Okta";
-            db.ref(`profiles/${partner}`).on('value', s => {
-                const d = s.val() || {};
-                document.getElementById('header-name').innerText = d.name || partner;
-                document.getElementById('header-status').innerText = d.status === "Online" ? "Online" : "Offline";
-            });
-
-            db.ref('chats').on('value', s => {
-                const box = document.getElementById('chat-box');
-                const data = s.val();
-                if(data) {
-                    box.innerHTML = "";
-                    const keys = Object.keys(data);
-                    const lastMsg = data[keys[keys.length - 1]];
-                    
-                    Object.values(data).forEach(m => renderMsg(m));
-                    
-                    if (!isFirstLoad && lastMsg.sender !== currentUser) {
-                        audio.currentTime = 0;
-                        audio.play().catch(e => console.log("Audio diblokir"));
-                    }
-                }
-                isFirstLoad = false;
-                box.scrollTop = box.scrollHeight;
-            });
-        }
-
-        function renderMsg(msg) {
+        // Sync Chat & Ping
+        db.ref('chats').on('value', s => {
             const box = document.getElementById('chat-box');
-            const div = document.createElement('div');
-            div.className = `message ${msg.sender === currentUser ? 'sent' : 'received'}`;
-            
-            // Perbaikan tampilan agar mendeteksi konten gambar/video otomatis
-            let visualContent = msg.content;
-            if (msg.content.includes("data:image") || msg.content.includes("<img")) {
-                // Jika isinya tag img atau data base64 gambar
-                visualContent = msg.content.includes("<img") ? msg.content : `<img src="${msg.content}">`;
-            } else if (msg.content.includes("data:video") || msg.content.includes("<video")) {
-                // Jika isinya tag video atau data base64 video
-                visualContent = msg.content.includes("<video") ? msg.content : `<video src="${msg.content}" controls></video>`;
+            const data = s.val();
+            if(data) {
+                box.innerHTML = "";
+                const keys = Object.keys(data);
+                const lastMsg = data[keys[keys.length - 1]];
+                
+                Object.values(data).forEach(m => renderMsg(m));
+                
+                if (!isFirstLoad && lastMsg.sender !== currentUser) {
+                    audio.currentTime = 0;
+                    audio.play().catch(e => console.log("Audio block"));
+                }
             }
+            isFirstLoad = false;
+            box.scrollTop = box.scrollHeight;
+        });
+    }
 
-            div.innerHTML = `${visualContent}<div class="msg-meta"><span class="time">${msg.time}</span></div>`;
-            box.appendChild(div);
+    // FUNGSI UTAMA PERBAIKAN TAMPILAN
+    function renderMsg(msg) {
+        const box = document.getElementById('chat-box');
+        const div = document.createElement('div');
+        div.className = `message ${msg.sender === currentUser ? 'sent' : 'received'}`;
+        
+        let contentHTML = "";
+
+        // Logika Deteksi Konten: Gambar, Video, atau Teks
+        if (msg.content.includes("data:image") || msg.content.includes("<img")) {
+            // Jika konten adalah base64 gambar atau tag img
+            const src = msg.content.includes("src=\"") ? msg.content.split('src="')[1].split('"')[0] : msg.content;
+            contentHTML = `<img src="${src}" style="width:100%; border-radius:10px; display:block;">`;
+        } 
+        else if (msg.content.includes("data:video") || msg.content.includes("<video")) {
+            // Jika konten adalah base64 video atau tag video
+            const src = msg.content.includes("src=\"") ? msg.content.split('src="')[1].split('"')[0] : msg.content;
+            contentHTML = `<video src="${src}" controls style="width:100%; border-radius:10px; display:block;"></video>`;
+        } 
+        else {
+            // Jika teks biasa
+            contentHTML = `<span>${msg.content}</span>`;
         }
 
-        document.getElementById('main-btn').onclick = () => {
-            const inp = document.getElementById('msg-input');
-            if (inp.value.trim()) {
+        div.innerHTML = `${contentHTML}<div class="msg-meta"><span class="time">${msg.time}</span></div>`;
+        box.appendChild(div);
+    }
+
+    document.getElementById('main-btn').onclick = () => {
+        const inp = document.getElementById('msg-input');
+        if (inp.value.trim()) {
+            db.ref('chats').push({
+                sender: currentUser,
+                content: inp.value,
+                time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+                timestamp: Date.now()
+            });
+            inp.value = "";
+        }
+    };
+
+    function handleFile(el) {
+        const file = el.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
                 db.ref('chats').push({
                     sender: currentUser,
-                    content: inp.value,
+                    content: e.target.result, // Simpan data murni, renderMsg yang akan mengolahnya
                     time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
                     timestamp: Date.now()
                 });
-                inp.value = "";
-            }
-        };
-
-        function handleFile(el) {
-            const file = el.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const isImage = file.type.startsWith('image');
-                    const visualTag = isImage ? 
-                        `<img src="${e.target.result}">` : 
-                        `<video src="${e.target.result}" controls></video>`;
-                    
-                    db.ref('chats').push({
-                        sender: currentUser,
-                        content: visualTag,
-                        time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-                        timestamp: Date.now()
-                    });
-                };
-                reader.readAsDataURL(file);
-            }
+            };
+            reader.readAsDataURL(file);
         }
+    }
 
-        window.onload = () => {
-            const saved = localStorage.getItem('logged_user');
-            if (saved) { 
-                currentUser = saved; 
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('app-interface').style.display = 'flex';
-                startApp();
-            }
-        };
-    </script>
-</body>
-</html>
+    window.onload = () => {
+        const saved = localStorage.getItem('logged_user');
+        if (saved) { 
+            currentUser = saved; 
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app-interface').style.display = 'flex';
+            startApp();
+        }
+    };
+</script>
