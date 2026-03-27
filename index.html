@@ -14,7 +14,6 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
         html, body { height: 100%; width: 100%; overflow: hidden; position: fixed; background: #fff; }
         
-        /* Screen Login */
         #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .user-item { padding: 15px; border: 1px solid #ddd; border-radius: 12px; width: 280px; margin-bottom: 12px; display: flex; align-items: center; gap: 15px; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .user-item:active { background: #f0f0f0; }
@@ -26,7 +25,7 @@
         .profile-pic.zoom { position: fixed; top: 20%; left: 10%; width: 80vw; height: 80vw; border-radius: 10px; z-index: 1000; box-shadow: 0 0 100px rgba(0,0,0,0.5); }
         
         .chat-container { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; }
-        .message { position: relative; max-width: 80%; padding: 6px 10px 18px 10px; margin-bottom: 8px; font-size: 15px; border-radius: 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); word-wrap: break-word; }
+        .message { position: relative; max-width: 80%; padding: 6px 10px 18px 10px; margin-bottom: 8px; font-size: 15px; border-radius: 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); word-wrap: break-word; cursor: pointer; }
         .received { background: white; align-self: flex-start; border-top-left-radius: 0; }
         .sent { background: var(--wa-light-green); align-self: flex-end; border-top-right-radius: 0; }
         
@@ -39,24 +38,18 @@
         
         .circle-btn { background: #008069; color: white; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; }
         
-        /* Panel Emoji & Sticker */
         #emoji-panel { display: none; background: white; height: 280px; overflow-y: auto; border-top: 1px solid #ddd; }
         .tab-bar { display: flex; background: #f0f0f0; padding: 5px; border-bottom: 1px solid #ddd; }
         .tab-btn { flex: 1; padding: 8px; text-align: center; cursor: pointer; font-size: 14px; font-weight: bold; border-radius: 5px; }
         .tab-active { background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        
         .grid-content { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; padding: 15px; }
         .sticker-grid { grid-template-columns: repeat(4, 1fr); }
         .emoji-item { font-size: 26px; text-align: center; cursor: pointer; padding: 5px; }
         .sticker-item { width: 100%; aspect-ratio: 1/1; object-fit: cover; cursor: pointer; border-radius: 5px; }
         
         .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 500; }
-        
-        /* Menu Dropdown */
         .menu-dropdown { display: none; position: absolute; top: 50px; right: 10px; background: white; color: black; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); padding: 5px; z-index: 1001; min-width: 160px; }
         .menu-item { padding: 12px 15px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 10px; border-radius: 5px; }
-        .menu-item:hover { background: #f5f5f5; }
-        .menu-item.logout { color: #e11d48; }
 
         audio.vn-msg { height: 35px; width: 200px; margin-top: 5px; }
         .sticker-msg { width: 130px; height: 130px; display: block; }
@@ -90,16 +83,10 @@
             <i data-lucide="more-vertical" style="cursor:pointer" onclick="toggleMenu(event)"></i>
             
             <div class="menu-dropdown" id="menu-dropdown">
-                <div class="menu-item" onclick="document.getElementById('profile-input').click()">
-                    <i data-lucide="image" style="width:16px"></i> Ganti Foto Profil
-                </div>
-                <div class="menu-item" onclick="document.getElementById('sticker-upload').click()">
-                    <i data-lucide="smile-plus" style="width:16px"></i> Tambah Stiker
-                </div>
+                <div class="menu-item" onclick="document.getElementById('profile-input').click()"><i data-lucide="image"></i> Ganti Profil</div>
+                <div class="menu-item" onclick="document.getElementById('sticker-upload').click()"><i data-lucide="smile-plus"></i> Tambah Stiker</div>
                 <hr style="border:0; border-top:1px solid #eee; margin:5px 0">
-                <div class="menu-item logout" onclick="logout()">
-                    <i data-lucide="log-out" style="width:16px"></i> Keluar (Logout)
-                </div>
+                <div class="menu-item" onclick="logout()" style="color:red"><i data-lucide="log-out"></i> Logout</div>
                 <input type="file" id="profile-input" hidden accept="image/*" onchange="updateProfilePic(this)">
                 <input type="file" id="sticker-upload" hidden accept="image/*" onchange="uploadSticker(this)">
             </div>
@@ -118,9 +105,9 @@
 
         <div class="input-area">
             <div class="input-box">
-                <i data-lucide="smile" style="color:#54656f; cursor:pointer" onclick="toggleEmoji()"></i>
+                <i data-lucide="smile" onclick="toggleEmoji()" style="cursor:pointer"></i>
                 <input type="text" id="msg-input" placeholder="Ketik pesan..." oninput="toggleBtn()" onfocus="closePanels()">
-                <label for="file-input"><i data-lucide="paperclip" style="color:#54656f; cursor:pointer"></i></label>
+                <label for="file-input"><i data-lucide="paperclip" style="cursor:pointer"></i></label>
                 <input type="file" id="file-input" hidden accept="image/*" onchange="handleImage(this)">
             </div>
             <button class="circle-btn" id="action-btn" onmousedown="startRecording()" onmouseup="stopRecording()" ontouchstart="startRecording()" ontouchend="stopRecording()" onclick="handleAction()">
@@ -145,17 +132,26 @@
         let audioChunks = [];
         const audio = document.getElementById('notif-sound');
 
-        function activateAudio() {
-            audio.play().then(() => { audio.pause(); audio.currentTime = 0; }).catch(() => {});
-            document.body.removeAttribute('onclick');
-        }
+        function activateAudio() { audio.play().then(() => { audio.pause(); audio.currentTime = 0; }).catch(() => {}); document.body.removeAttribute('onclick'); }
+        function getTime() { return new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); }
+
+        // AUTO-LOGIN SAAT REFRESH
+        window.onload = () => {
+            const savedUser = localStorage.getItem('logged_user_oknov');
+            if(savedUser) {
+                currentUser = savedUser;
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('app-interface').style.display = 'flex';
+                startApp();
+            }
+        };
 
         function loginAs(name) {
-            const pin = prompt(`Masukkan PIN untuk ${name}:`);
+            const pin = prompt(`PIN ${name}:`);
             const pins = { 'Okta': '14102000', 'Novi': '14112001' };
             if (pin === pins[name]) {
                 currentUser = name;
-                sessionStorage.setItem('logged_user', name); // Gunakan sessionStorage agar reset saat browser tutup total
+                localStorage.setItem('logged_user_oknov', name); 
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('app-interface').style.display = 'flex';
                 startApp();
@@ -163,8 +159,8 @@
         }
 
         function logout() {
-            if(currentUser) db.ref(`profiles/${currentUser}`).update({ status: "Offline" });
-            sessionStorage.removeItem('logged_user');
+            if(currentUser) db.ref(`profiles/${currentUser}`).update({ status: `Terakhir dilihat ${getTime()}` });
+            localStorage.removeItem('logged_user_oknov');
             location.reload();
         }
 
@@ -172,13 +168,10 @@
             lucide.createIcons();
             initEmoji();
             initStickers();
-            
             const partner = currentUser === "Okta" ? "Novi" : "Okta";
             
             db.ref(`profiles/${currentUser}`).update({ status: "Online" });
-            db.ref(`profiles/${currentUser}`).onDisconnect().update({ 
-                status: `Terakhir dilihat ${new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}` 
-            });
+            db.ref(`profiles/${currentUser}`).onDisconnect().update({ status: `Terakhir dilihat ${getTime()}` });
 
             db.ref(`profiles/${partner}`).on('value', s => {
                 const d = s.val() || {};
@@ -194,7 +187,23 @@
                 if(data) {
                     Object.keys(data).forEach(key => {
                         const m = data[key];
-                        renderMsg(m, key);
+                        const div = document.createElement('div');
+                        div.className = `message ${m.sender === currentUser ? 'sent' : 'received'}`;
+                        
+                        // FITUR HAPUS: Hold 1 detik
+                        div.oncontextmenu = (e) => { e.preventDefault(); confirmDelete(key); };
+                        let timer;
+                        div.ontouchstart = () => timer = setTimeout(() => confirmDelete(key), 800);
+                        div.ontouchend = () => clearTimeout(timer);
+
+                        let content = `<span>${m.content}</span>`;
+                        if(m.type === 'image') content = `<img src="${m.content}" style="width:100%; border-radius:8px;">`;
+                        if(m.type === 'vn') content = `<audio controls class="vn-msg"><source src="${m.content}"></audio>`;
+                        if(m.type === 'sticker') content = `<img src="${m.content}" class="sticker-msg">`;
+
+                        const status = m.read ? `<i data-lucide="check-check" style="color:var(--wa-blue); width:14px;"></i>` : `<i data-lucide="check" style="color:#888; width:14px;"></i>`;
+                        div.innerHTML = `${content}<div class="meta"><span class="time">${m.time}</span>${m.sender === currentUser ? status : ''}</div>`;
+                        box.appendChild(div);
                         if(m.sender !== currentUser && !m.read) db.ref(`chats/${key}`).update({ read: true });
                     });
                     if (!isFirstLoad) {
@@ -204,34 +213,35 @@
                 }
                 isFirstLoad = false;
                 box.scrollTop = box.scrollHeight;
+                lucide.createIcons();
             });
         }
 
-        function renderMsg(msg, id) {
-            const box = document.getElementById('chat-box');
-            const div = document.createElement('div');
-            div.className = `message ${msg.sender === currentUser ? 'sent' : 'received'}`;
-            
-            let html = `<span>${msg.content}</span>`;
-            if(msg.type === 'image') html = `<img src="${msg.content}" style="width:100%; border-radius:8px;">`;
-            if(msg.type === 'vn') html = `<audio controls class="vn-msg"><source src="${msg.content}"></audio>`;
-            if(msg.type === 'sticker') html = `<img src="${msg.content}" class="sticker-msg">`;
+        function confirmDelete(key) { if(confirm("Hapus pesan ini?")) db.ref(`chats/${key}`).remove(); }
 
-            const statusIcon = msg.read ? `<i data-lucide="check-check" style="color:var(--wa-blue); width:14px; margin-left:3px;"></i>` : `<i data-lucide="check" style="color:#888; width:14px; margin-left:3px;"></i>`;
-            div.innerHTML = `${html}<div class="meta"><span class="time">${msg.time}</span>${msg.sender === currentUser ? statusIcon : ''}</div>`;
-            box.appendChild(div);
-            lucide.createIcons();
+        function handleAction() {
+            const inp = document.getElementById('msg-input');
+            if(inp.value.trim()) {
+                db.ref('chats').push({ sender: currentUser, content: inp.value, type: 'text', time: getTime(), read: false });
+                inp.value = ""; toggleBtn();
+            }
+        }
+
+        function handleImage(el) {
+            const file = el.files[0];
+            if(file) {
+                const r = new FileReader();
+                r.onload = e => db.ref('chats').push({ sender: currentUser, content: e.target.result, type: 'image', time: getTime(), read: false });
+                r.readAsDataURL(file);
+            }
         }
 
         function uploadSticker(el) {
             const file = el.files[0];
             if(file) {
-                const reader = new FileReader();
-                reader.onload = e => {
-                    db.ref('custom_stickers').push(e.target.result);
-                    document.getElementById('menu-dropdown').style.display = 'none';
-                };
-                reader.readAsDataURL(file);
+                const r = new FileReader();
+                r.onload = e => db.ref('custom_stickers').push(e.target.result);
+                r.readAsDataURL(file);
             }
         }
 
@@ -240,64 +250,13 @@
                 const cont = document.getElementById('sticker-content');
                 cont.innerHTML = "";
                 const data = s.val();
-                if(data) {
-                    Object.values(data).forEach(url => {
-                        const img = document.createElement('img');
-                        img.className = "sticker-item";
-                        img.src = url;
-                        img.onclick = () => sendSticker(url);
-                        cont.appendChild(img);
-                    });
-                }
+                if(data) Object.values(data).forEach(url => {
+                    const img = document.createElement('img');
+                    img.className = "sticker-item"; img.src = url;
+                    img.onclick = () => db.ref('chats').push({ sender: currentUser, content: url, type: 'sticker', time: getTime(), read: false });
+                    cont.appendChild(img);
+                });
             });
-        }
-
-        function sendSticker(url) {
-            db.ref('chats').push({
-                sender: currentUser,
-                content: url,
-                type: 'sticker',
-                time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-                read: false
-            });
-            closePanels();
-        }
-
-        function toggleBtn() {
-            const val = document.getElementById('msg-input').value;
-            document.getElementById('btn-icon').setAttribute('data-lucide', val.trim() ? 'send-horizontal' : 'mic');
-            lucide.createIcons();
-        }
-
-        function handleAction() {
-            const inp = document.getElementById('msg-input');
-            if(inp.value.trim()) {
-                db.ref('chats').push({ sender: currentUser, content: inp.value, type: 'text', time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), read: false });
-                inp.value = ""; toggleBtn();
-            }
-        }
-
-        function handleImage(el) {
-            const file = el.files[0];
-            if(file) {
-                const reader = new FileReader();
-                reader.onload = e => {
-                    db.ref('chats').push({ sender: currentUser, content: e.target.result, type: 'image', time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), read: false });
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function updateProfilePic(el) {
-            const file = el.files[0];
-            if(file) {
-                const reader = new FileReader();
-                reader.onload = e => {
-                    db.ref(`profiles/${currentUser}`).update({ pic: e.target.result });
-                    document.getElementById('menu-dropdown').style.display = 'none';
-                };
-                reader.readAsDataURL(file);
-            }
         }
 
         async function startRecording() {
@@ -308,45 +267,36 @@
                 audioChunks = [];
                 mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
                 mediaRecorder.onstop = () => {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                    const reader = new FileReader();
-                    reader.onload = e => {
-                        db.ref('chats').push({ sender: currentUser, content: e.target.result, type: 'vn', time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), read: false });
-                    };
-                    reader.readAsDataURL(audioBlob);
+                    const r = new FileReader();
+                    r.onload = e => db.ref('chats').push({ sender: currentUser, content: e.target.result, type: 'vn', time: getTime(), read: false });
+                    r.readAsDataURL(new Blob(audioChunks, { type: 'audio/webm' }));
                 };
                 mediaRecorder.start();
-                document.getElementById('action-btn').style.backgroundColor = 'red';
-            } catch (err) { alert("Izin mic ditolak."); }
+                document.getElementById('action-btn').style.background = 'red';
+            } catch (err) { alert("Mic Error"); }
         }
 
-        function stopRecording() {
-            if(mediaRecorder && mediaRecorder.state === "recording") {
-                mediaRecorder.stop();
-                document.getElementById('action-btn').style.backgroundColor = '#008069';
-            }
-        }
-
-        function switchTab(type) {
-            document.getElementById('emoji-content').style.display = type === 'emoji' ? 'grid' : 'none';
-            document.getElementById('sticker-content').style.display = type === 'sticker' ? 'grid' : 'none';
-            document.getElementById('tab-emoji').classList.toggle('tab-active', type === 'emoji');
-            document.getElementById('tab-sticker').classList.toggle('tab-active', type === 'sticker');
-        }
-
-        function toggleMenu(e) { e.stopPropagation(); const m = document.getElementById('menu-dropdown'); m.style.display = m.style.display === 'block' ? 'none' : 'block'; }
+        function stopRecording() { if(mediaRecorder && mediaRecorder.state === "recording") { mediaRecorder.stop(); document.getElementById('action-btn').style.background = '#008069'; } }
+        function toggleBtn() { document.getElementById('btn-icon').setAttribute('data-lucide', document.getElementById('msg-input').value.trim() ? 'send-horizontal' : 'mic'); lucide.createIcons(); }
         function toggleEmoji() { const p = document.getElementById('emoji-panel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; }
+        function switchTab(t) { 
+            document.getElementById('emoji-content').style.display = t === 'emoji' ? 'grid' : 'none';
+            document.getElementById('sticker-content').style.display = t === 'sticker' ? 'grid' : 'none';
+            document.getElementById('tab-emoji').classList.toggle('tab-active', t === 'emoji');
+            document.getElementById('tab-sticker').classList.toggle('tab-active', t === 'sticker');
+        }
         function closePanels() { document.getElementById('emoji-panel').style.display = 'none'; document.getElementById('menu-dropdown').style.display = 'none'; }
+        function toggleMenu(e) { e.stopPropagation(); const m = document.getElementById('menu-dropdown'); m.style.display = m.style.display === 'block' ? 'none' : 'block'; }
         function zoomPic() { document.getElementById('header-pic').classList.toggle('zoom'); document.getElementById('overlay').style.display = 'block'; }
         function closeZoom() { document.getElementById('header-pic').classList.remove('zoom'); document.getElementById('overlay').style.display = 'none'; }
-
+        function updateProfilePic(el) { if(el.files[0]) { const r = new FileReader(); r.onload = e => db.ref(`profiles/${currentUser}`).update({ pic: e.target.result }); r.readAsDataURL(el.files[0]); } }
+        
         function initEmoji() {
             const emojis = ["😊","😂","🤣","❤️","😍","😘","🥰","😇","😋","😛","😜","🤪","🤨","🧐","🤔","🤫","🫠","🫣","🫢","🫡","🤩","🥳","🥵","🥶","🥺","😭","😤","😠","😡","🤬","🤯","😳","🤗","😰","😱","🥱","😴","🤤","🤢","🤮","😎","🤓","🤨","😒","🙄","😬","🤥","😶","😐","😑","🤐","🥴","😵","🙌","👏","👋","👍","👎","👊","🙏","🤝","🔥","✨","💯"];
-            const cont = document.getElementById('emoji-content');
             emojis.forEach(e => {
                 const s = document.createElement('div'); s.className = "emoji-item"; s.innerText = e;
                 s.onclick = () => { document.getElementById('msg-input').value += e; toggleBtn(); };
-                cont.appendChild(s);
+                document.getElementById('emoji-content').appendChild(s);
             });
         }
     </script>
