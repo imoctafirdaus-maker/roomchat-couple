@@ -31,9 +31,14 @@
 
         #app-interface { display: none; height: 100%; flex-direction: column; background-color: var(--bg-chat); background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); }
 
-        .header { background: var(--wa-green); color: white; padding: 10px 16px; display: flex; align-items: center; gap: 12px; height: 60px; flex-shrink: 0; z-index: 100; }
+        .header { background: var(--wa-green); color: white; padding: 10px 16px; display: flex; align-items: center; gap: 12px; height: 60px; flex-shrink: 0; z-index: 100; position: relative; }
         .profile-pic { width: 40px; height: 40px; border-radius: 50%; background: #ccc center/cover; position: relative; flex-shrink: 0; cursor: pointer; }
         .online-dot { width: 11px; height: 11px; background: #4df03d; border: 2px solid var(--wa-green); border-radius: 50%; position: absolute; bottom: 0; right: 0; }
+
+        /* Dropdown Menu Burger */
+        .dropdown-menu { display: none; position: absolute; top: 50px; right: 10px; background: white; min-width: 170px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 4px; z-index: 1000; padding: 8px 0; }
+        .dropdown-item { padding: 12px 16px; color: #333; font-size: 15px; cursor: pointer; }
+        .dropdown-item:active { background: #f5f5f5; }
 
         .chat-container { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; }
         .message { position: relative; max-width: 80%; padding: 8px 12px 22px 12px; margin-bottom: 12px; font-size: 15px; border-radius: 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); word-wrap: break-word; }
@@ -50,15 +55,13 @@
         .tab-btn { flex: 1; padding: 10px; border: none; background: none; cursor: pointer; color: #54656f; }
         .tab-btn.active { border-bottom: 3px solid var(--wa-dark); color: var(--wa-dark); }
         .panel-content { flex: 1; overflow-y: auto; padding: 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center; align-content: start; }
-        
-        .sticker-item { width: 100%; aspect-ratio: 1; object-fit: contain; cursor: pointer; border-radius: 8px; }
-        .add-sticker-btn { width: 100%; aspect-ratio: 1; border: 2px dashed #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #888; background: #f9f9f9; }
+        .emoji-grid { font-size: 24px; padding: 10px; display: grid; grid-template-columns: repeat(7, 1fr); gap: 15px; }
 
         .input-area { background: #f0f0f0; padding: 8px; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
         .input-box { background: white; flex: 1; border-radius: 25px; padding: 5px 12px; display: flex; align-items: center; gap: 8px; }
         input { border: none; flex: 1; padding: 10px 0; outline: none; font-size: 16px; }
         .icon-btn { color: #54656f; cursor: pointer; border: none; background: none; }
-        .circle-btn { background: #008069; color: white; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; flex-shrink: 0; }
+        .circle-btn { background: #008069; color: white; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; flex-shrink: 0; transition: 0.2s; }
         
         .recording { background: #ff4b4b !important; animation: pulse 1s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
@@ -88,7 +91,6 @@
                 <div style="font-weight: bold; font-size: 18px;">Novi</div>
             </div>
         </div>
-        <button onclick="clearHistory()" style="margin-top: 30px; background: none; border: none; color: #ff4b4b; cursor: pointer; font-size: 12px;">Hapus Semua Riwayat</button>
     </div>
 
     <div id="app-interface">
@@ -125,9 +127,14 @@
                 <h4 id="header-name">Partner</h4>
                 <span id="header-status" style="font-size: 12px; opacity: 0.9;">Offline</span>
             </div>
-            <div style="display: flex; gap: 15px;">
+            <div style="display: flex; gap: 15px; align-items: center;">
                 <i data-lucide="rotate-cw" size="20" onclick="location.reload()" style="cursor: pointer;"></i>
-                <i data-lucide="log-out" size="20" onclick="logout()" style="cursor: pointer;"></i>
+                <i data-lucide="more-vertical" size="22" onclick="toggleMenu()" style="cursor: pointer;"></i>
+                <div id="burger-dropdown" class="dropdown-menu">
+                    <div class="dropdown-item" onclick="document.getElementById('settings-modal').style.display='flex'; toggleMenu()">Setelan</div>
+                    <div class="dropdown-item" onclick="clearHistory(); toggleMenu()">Hapus Chat</div>
+                    <div class="dropdown-item" onclick="logout(); toggleMenu()">Keluar</div>
+                </div>
             </div>
         </div>
 
@@ -210,7 +217,6 @@
             document.getElementById('app-interface').style.display = 'flex';
             document.getElementById('settings-title').innerText = `Profil ${currentUser}`;
             
-            // Set status online
             const statusRef = db.ref(`profiles/${currentUser}`);
             statusRef.update({ status: "Online", lastSeen: "" });
             statusRef.onDisconnect().update({
@@ -220,6 +226,11 @@
 
             listenProfile();
             listenChat();
+        }
+
+        function toggleMenu() {
+            const menu = document.getElementById('burger-dropdown');
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
         }
 
         function logout() {
@@ -240,7 +251,6 @@
                 const partnerData = profiles[partner] || {};
                 
                 partnerOnline = (partnerData.status === "Online");
-                
                 document.getElementById('header-name').innerText = partnerData.name || (partner === "Novi" ? "Novi ❤️" : "Okta Firdaus");
                 
                 const statusEl = document.getElementById('header-status');
@@ -249,7 +259,6 @@
                 if (partnerOnline) {
                     statusEl.innerText = "Online";
                     dotEl.style.background = "#4df03d";
-                    // Jika partner online, semua pesan masuk miliknya yang berstatus 'sent' diubah jadi 'read'
                     markMessagesAsRead();
                 } else {
                     statusEl.innerText = partnerData.lastSeen ? `terakhir dilihat pukul ${partnerData.lastSeen}` : "Offline";
@@ -270,7 +279,6 @@
                 const chats = snap.val();
                 if (chats) {
                     Object.keys(chats).forEach(key => {
-                        // Jika pesan dikirim oleh KITA dan statusnya masih 'sent'
                         if (chats[key].sender === currentUser && chats[key].status === 'sent') {
                             db.ref(`chats/${key}`).update({ status: 'read' });
                         }
@@ -288,7 +296,6 @@
                     const lastMsg = messages[messages.length - 1][1];
                     if (lastMsg.sender !== currentUser) {
                         notifSound.play().catch(() => {});
-                        // Jika kita sedang buka app (online), otomatis pesan yang masuk langsung 'read'
                         if (messages[messages.length - 1][1].status === 'sent') {
                             db.ref(`chats/${messages[messages.length - 1][0]}`).update({ status: 'read' });
                         }
@@ -299,36 +306,24 @@
                 messages.forEach(([id, msg]) => {
                     renderMsg(msg.content, msg.sender === currentUser ? 'sent' : 'received', msg.time, msg.isSticker, msg.status);
                 });
-                
                 isFirstLoad = false;
             });
         }
 
         function addMsg(content, type, isSticker = false) {
             const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            // Logika status: Jika partner online saat kirim, langsung 'read', jika tidak 'sent'
             const initialStatus = partnerOnline ? 'read' : 'sent';
             db.ref('chats').push({ 
-                sender: currentUser, 
-                content, 
-                time, 
-                isSticker, 
-                status: initialStatus,
-                timestamp: Date.now() 
+                sender: currentUser, content, time, isSticker, status: initialStatus, timestamp: Date.now() 
             });
         }
 
         function renderMsg(content, type, time, isSticker = false, status = 'sent') {
             const div = document.createElement('div');
             div.className = `message ${type} ${isSticker ? 'sticker-msg' : ''}`;
-            
             let statusIcon = "";
             if (type === 'sent') {
-                if (status === 'read') {
-                    statusIcon = '<i data-lucide="check-check" size="14" color="#34b7f1"></i>'; // Centang dua biru
-                } else {
-                    statusIcon = '<i data-lucide="check" size="14" color="#888"></i>'; // Centang satu abu
-                }
+                statusIcon = status === 'read' ? '<i data-lucide="check-check" size="14" color="#34b7f1"></i>' : '<i data-lucide="check" size="14" color="#888"></i>';
             }
 
             div.innerHTML = isSticker ? 
@@ -340,7 +335,6 @@
             lucide.createIcons();
         }
 
-        // Sisanya kode (toggleEmoji, switchTab, dll) tetap sama sesuai request sebelumnya
         function toggleEmoji() { 
             const isOpen = emojiPanel.style.display === 'flex';
             emojiPanel.style.display = isOpen ? 'none' : 'flex';
@@ -352,14 +346,17 @@
             btn.classList.add('active');
             panelContent.innerHTML = "";
             if(type === 'emoji') {
-                panelContent.style.gridTemplateColumns = "repeat(6, 1fr)";
-                const emojis = ["😀","😂","😍","🥰","😘","😭","🔥","❤️","👍","🤣","😊","🙏","✨","✅","💔","🥺"];
+                panelContent.style.gridTemplateColumns = "1fr";
+                const emojiWrapper = document.createElement('div');
+                emojiWrapper.className = 'emoji-grid';
+                const emojis = ["😀","😃","😄","😁","😆","😅","😂","🤣","😊","😇","🙂","🙃","😉","😌","😍","🥰","😘","😗","😙","😚","😋","😛","😝","😜","🤪","🤨","🧐","🤓","😎","🤩","🥳","😏","😒","😞","😔","😟","😕","🙁","☹️","😣","😖","😫","😩","🥺","😢","😭","😤","😠","😡","🤬","🤯","😳","🥵","🥶","😱","😨","😰","😥","😓","🤗","🤔","🤭","🤫","🤥","😶","😐","😑","😬","🙄","😯","😦","😧","😮","😲","🥱","😴","🤤","😪","😵","🤐","🥴","🤢","🤮","🤧","😷","🤒","🤕","🤑","🤠","😈","👿","👹","👺","🤡","💩","👻","💀","☠️","👽","👾","🤖","🎃","😺","😸","😹","😻","😼","😽","🙀","😿","😾","👋","🤚","🖐","✋","🖖","👌","🤏","✌️","🤞","🤟","🤘","🤙","👈","👉","👆","🖕","👇","☝️","👍","👎","✊","👊","🤛","🤜","👏","🙌","👐","🤲","🤝","🙏","✍️","💅","🤳","💪","🦾","🦵","🦿","🦶","👂","🦻","👃","🧠","🦷","🦴","👀","👁","👅","👄","💋","🩸","❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟","✨","🔥","⚡️","☀️","🌟","☁️"];
                 emojis.forEach(e => {
                     const span = document.createElement('span');
                     span.innerText = e; span.style.cursor = 'pointer';
                     span.onclick = () => { input.value += e; input.dispatchEvent(new Event('input')); };
-                    panelContent.appendChild(span);
+                    emojiWrapper.appendChild(span);
                 });
+                panelContent.appendChild(emojiWrapper);
             } else {
                 panelContent.style.gridTemplateColumns = "repeat(4, 1fr)";
                 const addBtn = document.createElement('div');
@@ -383,19 +380,22 @@
             lucide.createIcons();
         }
 
-        function uploadCustomSticker(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    db.ref('custom_stickers').push(e.target.result);
-                    switchTab('sticker', document.querySelectorAll('.tab-btn')[1]);
-                };
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
+        // Fitur Tombol Kirim Otomatis
+        input.addEventListener('input', () => { 
+            const isTyping = input.value.trim() !== "";
+            btnIcon.setAttribute('data-lucide', isTyping ? 'send-horizontal' : 'mic'); 
+            lucide.createIcons(); 
+        });
 
-        input.addEventListener('input', () => { btnIcon.setAttribute('data-lucide', input.value.trim() !== "" ? 'send-horizontal' : 'mic'); lucide.createIcons(); });
-        mainBtn.addEventListener('click', () => { if(input.value.trim() !== "") { addMsg(input.value, 'sent'); input.value = ""; btnIcon.setAttribute('data-lucide', 'mic'); lucide.createIcons(); emojiPanel.style.display = 'none'; } });
+        mainBtn.addEventListener('click', () => { 
+            if(input.value.trim() !== "") { 
+                addMsg(input.value, 'sent'); 
+                input.value = ""; 
+                btnIcon.setAttribute('data-lucide', 'mic'); 
+                lucide.createIcons(); 
+                emojiPanel.style.display = 'none'; 
+            } 
+        });
 
         function handleFile(el) {
             const file = el.files[0];
@@ -432,7 +432,8 @@
         }
         function stopRecording() { if (mediaRecorder?.state === "recording") { mediaRecorder.stop(); mainBtn.classList.remove('recording'); } }
 
-        mainBtn.addEventListener('mousedown', startRecording); mainBtn.addEventListener('mouseup', stopRecording);
+        mainBtn.addEventListener('mousedown', startRecording); 
+        mainBtn.addEventListener('mouseup', stopRecording);
         mainBtn.addEventListener('touchstart', (e) => { if(input.value.trim()==="") { e.preventDefault(); startRecording(); } });
         mainBtn.addEventListener('touchend', stopRecording);
         input.addEventListener("keypress", (e) => { if(e.key === "Enter") mainBtn.click(); });
@@ -441,6 +442,14 @@
             const saved = localStorage.getItem('logged_user');
             if (saved) { currentUser = saved; enterApp(); }
         };
+
+        // Tutup dropdown jika klik di luar
+        window.onclick = function(event) {
+            if (!event.target.matches('[data-lucide="more-vertical"]')) {
+                const dropdown = document.getElementById('burger-dropdown');
+                if (dropdown) dropdown.style.display = 'none';
+            }
+        }
     </script>
 </body>
 </html>
