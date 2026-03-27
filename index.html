@@ -3,157 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WhatsApp Couple - Aktif</title>
+    <title>WhatsApp Couple Pro</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        :root {
-            --wa-green: #075e54;
-            --wa-light-green: #dcf8c6;
-            --wa-blue: #34b7f1;
-            --bg-chat: #e5ddd5;
-        }
-
+        :root { --wa-green: #075e54; --wa-light-green: #dcf8c6; --wa-blue: #34b7f1; --bg-chat: #e5ddd5; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        html, body { height: 100%; width: 100%; overflow: hidden; position: fixed; }
+        body { background-color: var(--bg-chat); background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); display: flex; flex-direction: column; }
 
-        /* Memastikan body memenuhi layar penuh tanpa scroll body */
-        html, body {
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
-            position: fixed; /* Mencegah bouncing di iOS/Android */
-        }
+        /* Header */
+        .header { background: var(--wa-green); color: white; padding: 10px 16px; display: flex; align-items: center; gap: 12px; height: 60px; flex-shrink: 0; z-index: 100; }
+        .profile-pic { width: 40px; height: 40px; border-radius: 50%; background: url('logo.jpg') center/cover, #ccc; position: relative; }
+        .online-dot { width: 11px; height: 11px; background: #4df03d; border: 2px solid var(--wa-green); border-radius: 50%; position: absolute; bottom: 0; right: 0; }
 
-        body {
-            background-color: var(--bg-chat);
-            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Header Tetap di Atas */
-        .header {
-            background-color: var(--wa-green);
-            color: white;
-            padding: 10px 16px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            height: 60px;
-            flex-shrink: 0;
-            z-index: 100;
-        }
-
-        .profile-pic {
-            width: 40px; height: 40px;
-            border-radius: 50%;
-            background-image: url('logo.jpg');
-            background-size: cover;
-            background-position: center;
-            background-color: #ccc;
-            position: relative;
-        }
-        
-        .online-dot {
-            width: 11px; height: 11px;
-            background-color: #4df03d;
-            border: 2px solid var(--wa-green);
-            border-radius: 50%;
-            position: absolute;
-            bottom: 0; right: 0;
-        }
-
-        /* Chat Container yang Bisa Di-scroll */
-        .chat-container {
-            flex: 1;
-            padding: 15px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            -webkit-overflow-scrolling: touch; /* Scroll halus di HP */
-        }
-
-        .message {
-            position: relative;
-            max-width: 80%;
-            padding: 8px 12px 22px 12px;
-            margin-bottom: 12px;
-            font-size: 15px;
-            border-radius: 8px;
-            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
-        }
-
+        /* Chat Body */
+        .chat-container { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; }
+        .message { position: relative; max-width: 80%; padding: 8px 12px 22px 12px; margin-bottom: 12px; font-size: 15px; border-radius: 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); word-wrap: break-word; }
         .received { background: white; align-self: flex-start; border-top-left-radius: 0; }
         .sent { background: var(--wa-light-green); align-self: flex-end; border-top-right-radius: 0; }
-
         .msg-meta { position: absolute; right: 8px; bottom: 4px; display: flex; align-items: center; gap: 4px; }
         .time { font-size: 10px; color: #888; }
 
-        /* Input Area Tetap di Bawah */
-        .input-area {
-            background: transparent;
-            padding: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-shrink: 0;
-            margin-bottom: 5px;
-        }
+        /* Emoji Panel */
+        #emoji-panel { display: none; background: white; height: 200px; overflow-y: auto; padding: 10px; border-top: 1px solid #ddd; grid-template-columns: repeat(8, 1fr); gap: 10px; font-size: 24px; text-align: center; }
+        .emoji-item { cursor: pointer; transition: 0.2s; }
+        .emoji-item:active { transform: scale(1.5); }
 
-        .input-box {
-            background: white;
-            flex: 1;
-            border-radius: 25px;
-            padding: 5px 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        input {
-            border: none; flex: 1;
-            padding: 10px 0; outline: none;
-            font-size: 16px; /* Font size 16px mencegah auto-zoom di iPhone */
-        }
-        
+        /* Input Area */
+        .input-area { background: #f0f0f0; padding: 8px; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .input-box { background: white; flex: 1; border-radius: 25px; padding: 5px 12px; display: flex; align-items: center; gap: 8px; }
+        input { border: none; flex: 1; padding: 10px 0; outline: none; font-size: 16px; }
         .icon-btn { color: #54656f; cursor: pointer; border: none; background: none; }
+        .circle-btn { background: #008069; color: white; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; flex-shrink: 0; }
+        
+        /* VN Recording UI */
+        .recording { background: #ff4b4b !important; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 
-        .circle-btn {
-            background: #008069; color: white;
-            width: 48px; height: 48px;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            border: none; flex-shrink: 0;
-        }
+        /* Hidden Inputs */
+        #file-input, #camera-input { display: none; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div class="profile-pic">
-            <div class="online-dot"></div>
-        </div>
-        <div class="user-info">
-            <h4 style="font-size: 16px;">Novi ❤️</h4>
-            <span style="font-size: 12px; opacity: 0.9;">Online</span>
-        </div>
+        <div class="profile-pic"><div class="online-dot"></div></div>
+        <div class="user-info"><h4>Novi ❤️</h4><span style="font-size: 12px; opacity: 0.9;">Online</span></div>
     </div>
 
     <div class="chat-container" id="chat-box">
-        <div class="message received">
-            Sekarang tampilannya sudah diperbaiki, Okta! Kolom chat harusnya sudah terlihat jelas.
-            <div class="msg-meta"><span class="time">14:35</span></div>
-        </div>
+        <div class="message received">Klik ikon 😊 untuk pilih emoji atau tahan Mic untuk VN! <div class="msg-meta"><span class="time">14:40</span></div></div>
     </div>
+
+    <div id="emoji-panel"></div>
 
     <div class="input-area">
         <div class="input-box">
-            <button class="icon-btn" onclick="addMsg('🎉', 'sent')"><i data-lucide="smile"></i></button>
+            <button class="icon-btn" onclick="toggleEmoji()"><i data-lucide="smile"></i></button>
             <input type="text" id="msg-input" placeholder="Ketik pesan..." autocomplete="off">
-            <button class="icon-btn"><i data-lucide="paperclip"></i></button>
-            <button class="icon-btn" onclick="addMsg('📷 Mengirim Gambar...', 'sent')"><i data-lucide="camera"></i></button>
+            
+            <label for="file-input" class="icon-btn"><i data-lucide="paperclip"></i></label>
+            <input type="file" id="file-input" accept="image/*,video/*" onchange="handleFile(this)">
+            
+            <label for="camera-input" class="icon-btn"><i data-lucide="camera"></i></label>
+            <input type="file" id="camera-input" accept="image/*" capture="environment" onchange="handleFile(this)">
         </div>
         
-        <button class="circle-btn" id="main-btn" onclick="handleSend()">
+        <button class="circle-btn" id="main-btn" onmousedown="startVN()" onmouseup="stopVN()" ontouchstart="startVN()" ontouchend="stopVN()">
             <i data-lucide="mic" id="btn-icon"></i>
         </button>
     </div>
@@ -163,7 +79,25 @@
         const input = document.getElementById('msg-input');
         const chatBox = document.getElementById('chat-box');
         const btnIcon = document.getElementById('btn-icon');
+        const mainBtn = document.getElementById('main-btn');
+        const emojiPanel = document.getElementById('emoji-panel');
 
+        // 1. Emoji List
+        const emojis = ["😀","😃","😄","😁","😆","😅","😂","🤣","😊","😇","🙂","🙃","😉","😌","😍","🥰","😘","😗","😙","😚","😋","😛","😝","😜","🤪","🤨","🧐","🤓","😎","🤩","🥳","😏","😒","😞","😔","😟","😕","🙁","☹️","😣","😖","😫","😩","🥺","😢","😭","😤","😠","😡","🤬","🤯","😳","🥵","🥶","😱","😨","😰","😥","😓","🤗","🤔","🤭","🤫","🤥","😶","😐","😑","😬","🙄","😯","😦","😧","😮","😲","🥱","😴","🤤","😪","😵","🤐","🥴","🤢","🤮","🤧","😷","🤒","🤕","🤑","🤠","😈","👿","👹","👺","🤡","💩","👻","💀","☠️","👽","👾","🤖","🎃","😺","😸","😹","😻","😼","😽","🙀","😿","😾","❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟"];
+        
+        emojis.forEach(e => {
+            const span = document.createElement('span');
+            span.className = 'emoji-item';
+            span.innerText = e;
+            span.onclick = () => { input.value += e; input.dispatchEvent(new Event('input')); };
+            emojiPanel.appendChild(span);
+        });
+
+        function toggleEmoji() {
+            emojiPanel.style.display = emojiPanel.style.display === 'grid' ? 'none' : 'grid';
+        }
+
+        // 2. Kirim Pesan / Ganti Icon
         input.addEventListener('input', () => {
             if(input.value.trim() !== "") {
                 btnIcon.setAttribute('data-lucide', 'send-horizontal');
@@ -173,25 +107,50 @@
             lucide.createIcons();
         });
 
+        function addMsg(content, type) {
+            const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            const div = document.createElement('div');
+            div.className = `message ${type}`;
+            div.innerHTML = `${content}<div class="msg-meta"><span class="time">${time}</span> ${type==='sent'?'<i data-lucide="check-check" size="14" color="#34b7f1"></i>':''}</div>`;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            lucide.createIcons();
+        }
+
         function handleSend() {
-            const text = input.value.trim();
-            if (text !== "") {
-                addMsg(text, 'sent');
+            if(input.value.trim() !== "") {
+                addMsg(input.value, 'sent');
                 input.value = "";
                 btnIcon.setAttribute('data-lucide', 'mic');
                 lucide.createIcons();
             }
         }
 
-        function addMsg(text, type) {
-            const now = new Date();
-            const timeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
-            const msgDiv = document.createElement('div');
-            msgDiv.className = `message ${type}`;
-            msgDiv.innerHTML = `${text}<div class="msg-meta"><span class="time">${timeStr}</span> ${type==='sent'?'<i data-lucide="check-check" size="14" color="#34b7f1"></i>':''}</div>`;
-            chatBox.appendChild(msgDiv);
-            lucide.createIcons();
-            chatBox.scrollTop = chatBox.scrollHeight;
+        // 3. Akses Kamera & Galeri
+        function handleFile(inputElement) {
+            const file = inputElement.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const tag = file.type.startsWith('image') ? `<img src="${e.target.result}" style="width:100%; border-radius:5px;">` : `<video src="${e.target.result}" controls style="width:100%;"></video>`;
+                    addMsg(tag, 'sent');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // 4. Voice Note Logic (Simulation)
+        let vnTimer;
+        function startVN() {
+            if(input.value.trim() !== "") { handleSend(); return; }
+            mainBtn.classList.add('recording');
+            console.log("Recording started...");
+        }
+
+        function stopVN() {
+            if(!mainBtn.classList.contains('recording')) return;
+            mainBtn.classList.remove('recording');
+            addMsg('<div style="display:flex; align-items:center; gap:10px;"><i data-lucide="play" fill="currentColor"></i> <div style="width:100px; height:3px; background:#aaa;"></div> 0:05</div>', 'sent');
         }
 
         input.addEventListener("keypress", (e) => { if(e.key === "Enter") handleSend(); });
