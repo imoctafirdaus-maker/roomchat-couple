@@ -22,7 +22,7 @@
         .profile-pic { width: 40px; height: 40px; border-radius: 50%; background: #ccc center/cover; position: relative; }
         .online-dot { width: 11px; height: 11px; background: #4df03d; border: 2px solid var(--wa-green); border-radius: 50%; position: absolute; bottom: 0; right: 0; }
         .chat-container { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; }
-        .message { position: relative; max-width: 80%; padding: 8px 12px 22px 12px; margin-bottom: 12px; font-size: 15px; border-radius: 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
+        .message { position: relative; max-width: 80%; padding: 8px 12px 22px 12px; margin-bottom: 12px; font-size: 15px; border-radius: 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); word-wrap: break-word; }
         .received { background: white; align-self: flex-start; border-top-left-radius: 0; }
         .sent { background: var(--wa-light-green); align-self: flex-end; border-top-right-radius: 0; }
         .msg-meta { position: absolute; right: 8px; bottom: 4px; display: flex; align-items: center; gap: 4px; }
@@ -31,7 +31,7 @@
         .input-box { background: white; flex: 1; border-radius: 25px; padding: 5px 12px; display: flex; align-items: center; gap: 8px; }
         input { border: none; flex: 1; padding: 10px 0; outline: none; font-size: 16px; }
         .circle-btn { background: #008069; color: white; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; }
-        video, img { border-radius: 10px; max-width: 100%; display: block; margin-bottom: 5px; }
+        video, img { border-radius: 10px; max-width: 100%; display: block; margin-top: 5px; }
     </style>
 </head>
 <body onclick="enableAudioOnFirstClick()">
@@ -44,8 +44,14 @@
         <div class="login-logo"></div>
         <h3 style="margin-bottom:20px; color:#54656f;">Siapa Anda?</h3>
         <div class="user-list">
-            <div class="user-item" onclick="loginAs('Okta')"><b>Okta</b></div>
-            <div class="user-item" onclick="loginAs('Novi')"><b>Novi</b></div>
+            <div class="user-item" onclick="loginAs('Okta')">
+                <div class="user-avatar" style="background-color:#075e54; color:white; display:flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:50%;">O</div>
+                <b>Okta</b>
+            </div>
+            <div class="user-item" onclick="loginAs('Novi')">
+                <div class="user-avatar" style="background-color:#e11d48; color:white; display:flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:50%;">N</div>
+                <b>Novi</b>
+            </div>
         </div>
     </div>
 
@@ -110,22 +116,27 @@
             db.ref(`profiles/${currentUser}`).onDisconnect().update({ status: "Offline" });
 
             const partner = currentUser === "Okta" ? "Novi" : "Okta";
-            
-            // Listen Chat & Ping
+            db.ref(`profiles/${partner}`).on('value', s => {
+                const d = s.val() || {};
+                document.getElementById('header-name').innerText = d.name || partner;
+                document.getElementById('header-status').innerText = d.status === "Online" ? "Online" : "Offline";
+            });
+
+            // Baca Chat & Putar Suara
             db.ref('chats').on('value', s => {
                 const box = document.getElementById('chat-box');
-                box.innerHTML = "";
                 const data = s.val();
+                box.innerHTML = "";
                 if(data) {
                     const keys = Object.keys(data);
                     const lastMsg = data[keys[keys.length - 1]];
                     
                     Object.values(data).forEach(m => renderMsg(m));
                     
-                    // Bunyi Ping jika pesan baru masuk dari partner
+                    // Bunyi Ping jika pesan masuk dari partner
                     if (!isFirstLoad && lastMsg.sender !== currentUser) {
                         audio.currentTime = 0;
-                        audio.play().catch(e => console.log("Audio ditahan browser"));
+                        audio.play().catch(e => console.log("Audio diblokir browser"));
                     }
                 }
                 isFirstLoad = false;
@@ -138,11 +149,11 @@
             const div = document.createElement('div');
             div.className = `message ${msg.sender === currentUser ? 'sent' : 'received'}`;
             
-            let content = msg.content;
-            if(msg.type === 'image') content = `<img src="${msg.content}">`;
-            if(msg.type === 'video') content = `<video src="${msg.content}" controls playsinline></video>`;
+            let contentHtml = msg.content;
+            if (msg.type === 'image') contentHtml = `<img src="${msg.content}">`;
+            if (msg.type === 'video') contentHtml = `<video src="${msg.content}" controls playsinline></video>`;
             
-            div.innerHTML = `${content}<div class="msg-meta"><span class="time">${msg.time}</span></div>`;
+            div.innerHTML = `${contentHtml}<div class="msg-meta"><span class="time">${msg.time}</span></div>`;
             box.appendChild(div);
         }
 
@@ -163,18 +174,19 @@
             const file = el.files[0];
             if (!file) return;
 
-            // Batasi ukuran file (Max 5MB agar Firebase tidak error)
-            if (file.size > 5242880) {
-                alert("File terlalu besar! Maksimal 5MB agar tidak error.");
+            // Batasi agar tidak eror (Max 3MB)
+            if (file.size > 3145728) {
+                alert("File terlalu besar (Maks 3MB). Video pendek saja ya!");
                 return;
             }
 
             const reader = new FileReader();
             reader.onload = (e) => {
+                const isImage = file.type.startsWith('image');
                 db.ref('chats').push({
                     sender: currentUser,
                     content: e.target.result,
-                    type: file.type.startsWith('image') ? 'image' : 'video',
+                    type: isImage ? 'image' : 'video',
                     time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
                 });
             };
