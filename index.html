@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -22,7 +23,7 @@
         .profile-pic { width: 40px; height: 40px; border-radius: 50%; background: #ccc center/cover; position: relative; }
         .online-dot { width: 11px; height: 11px; background: #4df03d; border: 2px solid var(--wa-green); border-radius: 50%; position: absolute; bottom: 0; right: 0; }
         .chat-container { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; }
-        .message { position: relative; max-width: 80%; padding: 8px 12px 22px 12px; margin-bottom: 12px; font-size: 15px; border-radius: 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
+        .message { position: relative; max-width: 80%; padding: 8px 12px 22px 12px; margin-bottom: 12px; font-size: 15px; border-radius: 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); word-wrap: break-word; }
         .received { background: white; align-self: flex-start; border-top-left-radius: 0; }
         .sent { background: var(--wa-light-green); align-self: flex-end; border-top-right-radius: 0; }
         .msg-meta { position: absolute; right: 8px; bottom: 4px; display: flex; align-items: center; gap: 4px; }
@@ -31,15 +32,14 @@
         .input-box { background: white; flex: 1; border-radius: 25px; padding: 5px 12px; display: flex; align-items: center; gap: 8px; }
         input { border: none; flex: 1; padding: 10px 0; outline: none; font-size: 16px; }
         .circle-btn { background: #008069; color: white; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; }
-        video { border-radius: 10px; max-width: 100%; }
-        audio.vn { height: 35px; width: 200px; }
+        video, img { border-radius: 10px; max-width: 100%; display: block; margin-top: 5px; }
         #emoji-panel { display: none; background: white; height: 250px; overflow-y: auto; border-top: 1px solid #ddd; }
     </style>
 </head>
 <body onclick="enableAudioOnFirstClick()">
 
     <audio id="notif-sound" preload="auto">
-        <source src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3" type="audio/mpeg">
+        <source src="https://raw.githubusercontent.com/Aris-Agustiyan/whatsapp-clone/master/src/assets/sounds/whatsapp_notification.mp3" type="audio/mpeg">
     </audio>
 
     <div id="login-screen">
@@ -47,11 +47,11 @@
         <h3 style="margin-bottom:20px; color:#54656f;">Siapa Anda?</h3>
         <div class="user-list">
             <div class="user-item" onclick="loginAs('Okta')">
-                <div class="user-avatar" style="background-color:#075e54; color:white; display:flex; align-items:center; justify-content:center;">O</div>
+                <div class="user-avatar" style="background-color:#075e54; color:white; display:flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:50%;">O</div>
                 <b>Okta</b>
             </div>
             <div class="user-item" onclick="loginAs('Novi')">
-                <div class="user-avatar" style="background-color:#e11d48; color:white; display:flex; align-items:center; justify-content:center;">N</div>
+                <div class="user-avatar" style="background-color:#e11d48; color:white; display:flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:50%;">N</div>
                 <b>Novi</b>
             </div>
         </div>
@@ -81,7 +81,6 @@
     </div>
 
     <script>
-        // --- KONFIGURASI FIREBASE ---
         const firebaseConfig = {
           apiKey: "AIzaSyAH7DAAnW10vhlf9Fb4FNS--Djq67KUTA0",
           authDomain: "couple-chat-okta-dan-novi.firebaseapp.com",
@@ -93,16 +92,10 @@
 
         let currentUser = "";
         let isFirstLoad = true;
-        let lastMsgTime = Date.now();
         const audio = document.getElementById('notif-sound');
 
-        // Fungsi pancingan suara (Sangat Penting)
         function enableAudioOnFirstClick() {
-            audio.play().then(() => {
-                audio.pause();
-                audio.currentTime = 0;
-            }).catch(() => {});
-            // Hapus event listener setelah sekali klik agar tidak mengganggu
+            audio.play().then(() => { audio.pause(); audio.currentTime = 0; }).catch(() => {});
             document.body.removeAttribute('onclick');
         }
 
@@ -112,7 +105,7 @@
             if (pin === pins[name]) {
                 currentUser = name;
                 localStorage.setItem('logged_user', name);
-                enableAudioOnFirstClick(); // Aktifkan audio saat login
+                enableAudioOnFirstClick();
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('app-interface').style.display = 'flex';
                 startApp();
@@ -121,12 +114,9 @@
 
         function startApp() {
             lucide.createIcons();
-            
-            // Status Online
             db.ref(`profiles/${currentUser}`).update({ status: "Online" });
             db.ref(`profiles/${currentUser}`).onDisconnect().update({ status: "Offline", lastSeen: new Date().toLocaleTimeString() });
 
-            // Listen Partner
             const partner = currentUser === "Okta" ? "Novi" : "Okta";
             db.ref(`profiles/${partner}`).on('value', s => {
                 const d = s.val() || {};
@@ -134,30 +124,23 @@
                 document.getElementById('header-status').innerText = d.status === "Online" ? "Online" : "Offline";
             });
 
-            // Listen Chat & SUARA
-            db.ref('chats').limitToLast(1).on('child_added', s => {
-                const msg = s.val();
-                renderMsg(msg);
-                
-                // LOGIKA SUARA: Jika pesan dari partner DAN bukan loading awal
-                if (!isFirstLoad && msg.sender !== currentUser) {
-                    audio.currentTime = 0;
-                    const playPromise = audio.play();
-                    if (playPromise !== undefined) {
-                        playPromise.catch(e => console.log("Browser memblokir suara: ", e));
+            db.ref('chats').on('value', s => {
+                const box = document.getElementById('chat-box');
+                const data = s.val();
+                if(data) {
+                    box.innerHTML = "";
+                    const keys = Object.keys(data);
+                    const lastMsg = data[keys[keys.length - 1]];
+                    
+                    Object.values(data).forEach(m => renderMsg(m));
+                    
+                    if (!isFirstLoad && lastMsg.sender !== currentUser) {
+                        audio.currentTime = 0;
+                        audio.play().catch(e => console.log("Audio diblokir"));
                     }
                 }
                 isFirstLoad = false;
-            });
-            
-            // Load history awal
-            db.ref('chats').once('value', s => {
-                const data = s.val();
-                if(data) {
-                    document.getElementById('chat-box').innerHTML = "";
-                    Object.values(data).forEach(m => renderMsg(m));
-                }
-                isFirstLoad = false;
+                box.scrollTop = box.scrollHeight;
             });
         }
 
@@ -165,9 +148,19 @@
             const box = document.getElementById('chat-box');
             const div = document.createElement('div');
             div.className = `message ${msg.sender === currentUser ? 'sent' : 'received'}`;
-            div.innerHTML = `${msg.content}<div class="msg-meta"><span class="time">${msg.time}</span></div>`;
+            
+            // Perbaikan tampilan agar mendeteksi konten gambar/video otomatis
+            let visualContent = msg.content;
+            if (msg.content.includes("data:image") || msg.content.includes("<img")) {
+                // Jika isinya tag img atau data base64 gambar
+                visualContent = msg.content.includes("<img") ? msg.content : `<img src="${msg.content}">`;
+            } else if (msg.content.includes("data:video") || msg.content.includes("<video")) {
+                // Jika isinya tag video atau data base64 video
+                visualContent = msg.content.includes("<video") ? msg.content : `<video src="${msg.content}" controls></video>`;
+            }
+
+            div.innerHTML = `${visualContent}<div class="msg-meta"><span class="time">${msg.time}</span></div>`;
             box.appendChild(div);
-            box.scrollTop = box.scrollHeight;
         }
 
         document.getElementById('main-btn').onclick = () => {
@@ -188,12 +181,14 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    const content = file.type.startsWith('image') ? 
-                        `<img src="${e.target.result}" style="width:100%; border-radius:10px;">` : 
+                    const isImage = file.type.startsWith('image');
+                    const visualTag = isImage ? 
+                        `<img src="${e.target.result}">` : 
                         `<video src="${e.target.result}" controls></video>`;
+                    
                     db.ref('chats').push({
                         sender: currentUser,
-                        content: content,
+                        content: visualTag,
                         time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
                         timestamp: Date.now()
                     });
