@@ -39,7 +39,7 @@
 <body onclick="enableAudioOnFirstClick()">
 
     <audio id="notif-sound" preload="auto">
-        <source src="https://raw.githubusercontent.com/Aris-Agustiyan/whatsapp-clone/master/src/assets/sounds/whatsapp_notification.mp3" type="audio/mpeg">
+        <source src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3" type="audio/mpeg">
     </audio>
 
     <div id="login-screen">
@@ -47,11 +47,11 @@
         <h3 style="margin-bottom:20px; color:#54656f;">Siapa Anda?</h3>
         <div class="user-list">
             <div class="user-item" onclick="loginAs('Okta')">
-                <div class="user-avatar" style="background-color:#075e54; color:white; display:flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:50%;">O</div>
+                <div class="user-avatar" style="background-color:#075e54; color:white; display:flex; align-items:center; justify-content:center;">O</div>
                 <b>Okta</b>
             </div>
             <div class="user-item" onclick="loginAs('Novi')">
-                <div class="user-avatar" style="background-color:#e11d48; color:white; display:flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:50%;">N</div>
+                <div class="user-avatar" style="background-color:#e11d48; color:white; display:flex; align-items:center; justify-content:center;">N</div>
                 <b>Novi</b>
             </div>
         </div>
@@ -96,11 +96,13 @@
         let lastMsgTime = Date.now();
         const audio = document.getElementById('notif-sound');
 
+        // Fungsi pancingan suara (Sangat Penting)
         function enableAudioOnFirstClick() {
             audio.play().then(() => {
                 audio.pause();
                 audio.currentTime = 0;
             }).catch(() => {});
+            // Hapus event listener setelah sekali klik agar tidak mengganggu
             document.body.removeAttribute('onclick');
         }
 
@@ -110,7 +112,7 @@
             if (pin === pins[name]) {
                 currentUser = name;
                 localStorage.setItem('logged_user', name);
-                enableAudioOnFirstClick();
+                enableAudioOnFirstClick(); // Aktifkan audio saat login
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('app-interface').style.display = 'flex';
                 startApp();
@@ -120,9 +122,11 @@
         function startApp() {
             lucide.createIcons();
             
+            // Status Online
             db.ref(`profiles/${currentUser}`).update({ status: "Online" });
             db.ref(`profiles/${currentUser}`).onDisconnect().update({ status: "Offline", lastSeen: new Date().toLocaleTimeString() });
 
+            // Listen Partner
             const partner = currentUser === "Okta" ? "Novi" : "Okta";
             db.ref(`profiles/${partner}`).on('value', s => {
                 const d = s.val() || {};
@@ -130,29 +134,30 @@
                 document.getElementById('header-status').innerText = d.status === "Online" ? "Online" : "Offline";
             });
 
-            // Listen Chat & SUARA PING
+            // Listen Chat & SUARA
             db.ref('chats').limitToLast(1).on('child_added', s => {
                 const msg = s.val();
+                renderMsg(msg);
                 
-                // Pastikan history lama tidak membunyikan ping saat aplikasi baru dibuka
-                if (!isFirstLoad) {
-                    renderMsg(msg);
-                    // Bunyi ping hanya jika pesan datang dari partner
-                    if (msg.sender !== currentUser) {
-                        audio.currentTime = 0;
-                        audio.play().catch(e => console.log("Suara tertahan interaksi"));
+                // LOGIKA SUARA: Jika pesan dari partner DAN bukan loading awal
+                if (!isFirstLoad && msg.sender !== currentUser) {
+                    audio.currentTime = 0;
+                    const playPromise = audio.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(e => console.log("Browser memblokir suara: ", e));
                     }
                 }
+                isFirstLoad = false;
             });
             
-            // Load history awal tanpa bunyi
+            // Load history awal
             db.ref('chats').once('value', s => {
                 const data = s.val();
                 if(data) {
                     document.getElementById('chat-box').innerHTML = "";
                     Object.values(data).forEach(m => renderMsg(m));
                 }
-                isFirstLoad = false; // Setel false SETELAH history awal selesai dimuat
+                isFirstLoad = false;
             });
         }
 
