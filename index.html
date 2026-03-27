@@ -135,7 +135,6 @@
         function activateAudio() { audio.play().then(() => { audio.pause(); audio.currentTime = 0; }).catch(() => {}); document.body.removeAttribute('onclick'); }
         function getTime() { return new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); }
 
-        // AUTO-LOGIN SAAT REFRESH
         window.onload = () => {
             const savedUser = localStorage.getItem('logged_user_oknov');
             if(savedUser) {
@@ -159,6 +158,7 @@
         }
 
         function logout() {
+            // Update status manual sebelum logout
             if(currentUser) db.ref(`profiles/${currentUser}`).update({ status: `Terakhir dilihat ${getTime()}` });
             localStorage.removeItem('logged_user_oknov');
             location.reload();
@@ -170,9 +170,16 @@
             initStickers();
             const partner = currentUser === "Okta" ? "Novi" : "Okta";
             
-            db.ref(`profiles/${currentUser}`).update({ status: "Online" });
-            db.ref(`profiles/${currentUser}`).onDisconnect().update({ status: `Terakhir dilihat ${getTime()}` });
+            // LOGIKA ONLINE & TERAKHIR DILIHAT
+            const userStatusRef = db.ref(`profiles/${currentUser}`);
+            userStatusRef.update({ status: "Online" });
+            
+            // Jika koneksi terputus (aplikasi ditutup paksa/browser mati)
+            userStatusRef.onDisconnect().update({ 
+                status: `Terakhir dilihat ${getTime()}` 
+            });
 
+            // Pantau status Partner
             db.ref(`profiles/${partner}`).on('value', s => {
                 const d = s.val() || {};
                 document.getElementById('header-status').innerText = d.status || "Offline";
@@ -190,7 +197,6 @@
                         const div = document.createElement('div');
                         div.className = `message ${m.sender === currentUser ? 'sent' : 'received'}`;
                         
-                        // FITUR HAPUS: Hold 1 detik
                         div.oncontextmenu = (e) => { e.preventDefault(); confirmDelete(key); };
                         let timer;
                         div.ontouchstart = () => timer = setTimeout(() => confirmDelete(key), 800);
@@ -217,8 +223,8 @@
             });
         }
 
+        // --- Sisa Fungsi Tetap Sama ---
         function confirmDelete(key) { if(confirm("Hapus pesan ini?")) db.ref(`chats/${key}`).remove(); }
-
         function handleAction() {
             const inp = document.getElementById('msg-input');
             if(inp.value.trim()) {
@@ -226,7 +232,6 @@
                 inp.value = ""; toggleBtn();
             }
         }
-
         function handleImage(el) {
             const file = el.files[0];
             if(file) {
@@ -235,7 +240,6 @@
                 r.readAsDataURL(file);
             }
         }
-
         function uploadSticker(el) {
             const file = el.files[0];
             if(file) {
@@ -244,7 +248,6 @@
                 r.readAsDataURL(file);
             }
         }
-
         function initStickers() {
             db.ref('custom_stickers').on('value', s => {
                 const cont = document.getElementById('sticker-content');
@@ -258,7 +261,6 @@
                 });
             });
         }
-
         async function startRecording() {
             if(document.getElementById('msg-input').value.trim()) return;
             try {
@@ -275,7 +277,6 @@
                 document.getElementById('action-btn').style.background = 'red';
             } catch (err) { alert("Mic Error"); }
         }
-
         function stopRecording() { if(mediaRecorder && mediaRecorder.state === "recording") { mediaRecorder.stop(); document.getElementById('action-btn').style.background = '#008069'; } }
         function toggleBtn() { document.getElementById('btn-icon').setAttribute('data-lucide', document.getElementById('msg-input').value.trim() ? 'send-horizontal' : 'mic'); lucide.createIcons(); }
         function toggleEmoji() { const p = document.getElementById('emoji-panel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; }
@@ -290,7 +291,6 @@
         function zoomPic() { document.getElementById('header-pic').classList.toggle('zoom'); document.getElementById('overlay').style.display = 'block'; }
         function closeZoom() { document.getElementById('header-pic').classList.remove('zoom'); document.getElementById('overlay').style.display = 'none'; }
         function updateProfilePic(el) { if(el.files[0]) { const r = new FileReader(); r.onload = e => db.ref(`profiles/${currentUser}`).update({ pic: e.target.result }); r.readAsDataURL(el.files[0]); } }
-        
         function initEmoji() {
             const emojis = ["😊","😂","🤣","❤️","😍","😘","🥰","😇","😋","😛","😜","🤪","🤨","🧐","🤔","🤫","🫠","🫣","🫢","🫡","🤩","🥳","🥵","🥶","🥺","😭","😤","😠","😡","🤬","🤯","😳","🤗","😰","😱","🥱","😴","🤤","🤢","🤮","😎","🤓","🤨","😒","🙄","😬","🤥","😶","😐","😑","🤐","🥴","😵","🙌","👏","👋","👍","👎","👊","🙏","🤝","🔥","✨","💯"];
             emojis.forEach(e => {
