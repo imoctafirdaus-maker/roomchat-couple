@@ -31,8 +31,8 @@
 
         #app-interface { display: none; height: 100%; flex-direction: column; background-color: var(--bg-chat); background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); }
 
-        .header { background: var(--wa-green); color: white; padding: 10px 16px; display: flex; align-items: center; gap: 12px; height: 60px; flex-shrink: 0; z-index: 100; cursor: pointer; }
-        .profile-pic { width: 40px; height: 40px; border-radius: 50%; background: #ccc center/cover; position: relative; flex-shrink: 0; }
+        .header { background: var(--wa-green); color: white; padding: 10px 16px; display: flex; align-items: center; gap: 12px; height: 60px; flex-shrink: 0; z-index: 100; }
+        .profile-pic { width: 40px; height: 40px; border-radius: 50%; background: #ccc center/cover; position: relative; flex-shrink: 0; cursor: pointer; }
         .online-dot { width: 11px; height: 11px; background: #4df03d; border: 2px solid var(--wa-green); border-radius: 50%; position: absolute; bottom: 0; right: 0; }
 
         .chat-container { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; }
@@ -61,7 +61,7 @@
         .recording { background: #ff4b4b !important; animation: pulse 1s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 
-        #settings-modal, #preview-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; }
+        #settings-modal, #preview-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center; }
         .modal-content { background: white; width: 85%; padding: 20px; border-radius: 15px; }
         
         #file-input, #camera-input, #change-profile-input { display: none; }
@@ -99,18 +99,16 @@
                 </label>
                 <input type="text" id="new-name-input" placeholder="Ganti nama saya..." style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ddd; border-radius:5px;">
                 <button onclick="saveMyProfileSettings()" style="background:#008069; color:white; border:none; padding:10px; border-radius:5px; width:100%; font-weight:bold;">Simpan</button>
+                <button onclick="document.getElementById('settings-modal').style.display='none'" style="margin-top:10px; background:#ddd; border:none; padding:10px; border-radius:5px; width:100%;">Batal</button>
             </div>
         </div>
 
         <div id="preview-overlay">
             <div style="position: relative; width: 90%; height: 80%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                <img id="preview-img" style="max-width:100%; max-height:100%; border-radius:10px; object-fit: contain;">
+                <img id="preview-img" style="max-width:100%; max-height:100%; border-radius:10px; object-fit: contain; background: black;">
                 <div style="margin-top: 20px; display: flex; gap: 20px;">
                     <button onclick="downloadImage()" style="background: white; border: none; padding: 10px; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
                         <i data-lucide="download" color="#075e54"></i>
-                    </button>
-                    <button onclick="shareImage()" style="background: white; border: none; padding: 10px; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
-                        <i data-lucide="share-2" color="#075e54"></i>
                     </button>
                     <button onclick="document.getElementById('preview-overlay').style.display='none'" style="background: #ff4b4b; border: none; padding: 10px; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
                         <i data-lucide="x" color="white"></i>
@@ -120,12 +118,10 @@
         </div>
 
         <div class="header">
-            <div style="display: flex; align-items: center; gap: 12px; flex: 1;" onclick="document.getElementById('settings-modal').style.display='flex'">
-                <div class="profile-pic" id="header-pic"><div class="online-dot"></div></div>
-                <div class="user-info">
-                    <h4 id="header-name">Partner</h4>
-                    <span style="font-size: 12px; opacity: 0.9;">Online</span>
-                </div>
+            <div class="profile-pic" id="header-pic" onclick="enlargePartnerPic()"><div class="online-dot"></div></div>
+            <div class="user-info" style="flex: 1; cursor: pointer;" onclick="document.getElementById('settings-modal').style.display='flex'">
+                <h4 id="header-name">Partner</h4>
+                <span style="font-size: 12px; opacity: 0.9;">Online</span>
             </div>
             <div style="display: flex; gap: 15px;">
                 <i data-lucide="rotate-cw" size="20" onclick="location.reload()" style="cursor: pointer;"></i>
@@ -159,7 +155,7 @@
     </div>
 
     <script>
-        // --- CONFIG FIREBASE OKTA ---
+        // --- CONFIG FIREBASE ---
         const firebaseConfig = {
           apiKey: "AIzaSyAH7DAAnW10vhlf9Fb4FNS--Djq67KUTA0",
           authDomain: "couple-chat-okta-dan-novi.firebaseapp.com",
@@ -182,6 +178,7 @@
         const emojiPanel = document.getElementById('emoji-panel');
         const panelContent = document.getElementById('panel-content');
         let currentUser = "";
+        let currentPartnerPic = "";
 
         const userPins = { 'Okta': '14102000', 'Novi': '14112001' };
 
@@ -228,12 +225,23 @@
                 const partnerData = profiles[partner] || {};
                 
                 document.getElementById('header-name').innerText = partnerData.name || (partner === "Novi" ? "Novi ❤️" : "Okta Firdaus");
-                if(partnerData.pic) document.getElementById('header-pic').style.backgroundImage = `url('${partnerData.pic}')`;
                 
-                // Update login screens pics
+                if(partnerData.pic) {
+                    currentPartnerPic = partnerData.pic;
+                    document.getElementById('header-pic').style.backgroundImage = `url('${partnerData.pic}')`;
+                }
+                
                 if(profiles['Okta']?.pic) document.getElementById('login-pic-okta').style.backgroundImage = `url('${profiles['Okta'].pic}')`;
                 if(profiles['Novi']?.pic) document.getElementById('login-pic-novi').style.backgroundImage = `url('${profiles['Novi'].pic}')`;
             });
+        }
+
+        function enlargePartnerPic() {
+            if(currentPartnerPic) {
+                showFullImg(currentPartnerPic);
+            } else {
+                alert("Partner belum mengatur foto profil.");
+            }
         }
 
         function updateMyProfilePic(input) {
@@ -300,7 +308,7 @@
             btn.classList.add('active');
             panelContent.innerHTML = "";
             if(type === 'emoji') {
-                const emojis = ["😀","😃","😄","😁","😆","😅","😂","🤣","😊","😇","🥰","😍","😘","😋","😛","😜","🤪","🤨","🧐","😎","🤩","🥳","😏","😒","😔","😟","😕","🙁","☹️","😣","😫","😩","🥺","😢","😭","😤","😠","😡","🤬","🤯","😳","🥵","🥶","😱","😨","😰","😥","😓","🤗","🤔","🤭","🤫","🤥","😶","😐","😑","😬","🙄","😯","😦","😧","😮","😲","🥱","😴","🤤","😪","😵","🤐","🥴","🤢","🤮","BLOOM","🤧","😷","🤒","🤕","🤑","🤠","😈","👿","👹","👺","🤡","💩","💀","☠️","👽","👾","🤖","🎃","😺","😸","😹","😻","😼","😽","🙀","😿","😾","❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟"];
+                const emojis = ["😀","😃","😄","😁","😆","😅","😂","🤣","😊","😇","🥰","😍","😘","😋","😛","😜","🤪","🤨","🧐","😎","🤩","🥳","😏","😒","😔","😟","😕","🙁","☹️","😣","😫","😩","🥺","😢","😭","😤","😠","😡","🤬","🤯","😳","🥵","🥶","😱","😨","😰","😥","😓","🤗","🤔","🤭","🤫","🤥","😶","😐","😑","😬","🙄","😯","😦","😧","😮","😲","🥱","😴","🤤","😪","😵","🤐","🥴","🤢","🤮","🤧","😷","🤒","🤕","🤑","🤠","😈","👿","👹","👺","🤡","💩","💀","☠️","👽","👾","🤖","🎃","😺","😸","😹","😻","😼","😽","🙀","😿","😾","❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟"];
                 emojis.forEach(e => {
                     const span = document.createElement('span');
                     span.innerText = e; span.style.cursor = 'pointer';
@@ -337,12 +345,6 @@
 
         function showFullImg(src) { document.getElementById('preview-img').src = src; document.getElementById('preview-overlay').style.display = 'flex'; }
         function downloadImage() { const a = document.createElement('a'); a.href = document.getElementById('preview-img').src; a.download = `WA_${Date.now()}.png`; a.click(); }
-        async function shareImage() {
-            const res = await fetch(document.getElementById('preview-img').src);
-            const blob = await res.blob();
-            const file = new File([blob], "foto.png", { type: blob.type });
-            if (navigator.share) await navigator.share({ files: [file] });
-        }
 
         let mediaRecorder, audioChunks = [];
         async function startRecording() {
