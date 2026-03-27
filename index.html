@@ -6,25 +6,27 @@
     <title>WhatsApp Couple Pro</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        :root { --wa-green: #075e54; --wa-light-green: #dcf8c6; --wa-blue: #34b7f1; --bg-chat: #e5ddd5; }
+        :root { --wa-green: #075e54; --wa-light-green: #dcf8c6; --wa-blue: #34b7f1; --bg-chat: #e5ddd5; --wa-dark: #128c7e; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         html, body { height: 100%; width: 100%; overflow: hidden; position: fixed; }
-        body { background-color: var(--bg-chat); background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); display: flex; flex-direction: column; }
+        
+        /* Login Screen */
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        .login-logo { color: #25d366; margin-bottom: 30px; }
+        .login-title { font-size: 20px; color: #54656f; margin-bottom: 20px; font-weight: bold; }
+        .user-list { width: 100%; max-width: 300px; display: flex; flex-direction: column; gap: 15px; }
+        .user-item { padding: 15px; border: 1px solid #ddd; border-radius: 10px; display: flex; align-items: center; gap: 15px; cursor: pointer; transition: 0.2s; }
+        .user-item:active { background: #f0f0f0; transform: scale(0.98); }
+        .user-avatar { width: 45px; height: 45px; border-radius: 50%; background: #ccc center/cover; }
 
-        /* Header */
+        /* Main App Structure */
+        #app-interface { display: none; height: 100%; flex-direction: column; background-color: var(--bg-chat); background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); }
+
+        /* Header & Components */
         .header { background: var(--wa-green); color: white; padding: 10px 16px; display: flex; align-items: center; gap: 12px; height: 60px; flex-shrink: 0; z-index: 100; cursor: pointer; }
         .profile-pic { width: 40px; height: 40px; border-radius: 50%; background: url('logo.jpg') center/cover, #ccc; position: relative; flex-shrink: 0; }
         .online-dot { width: 11px; height: 11px; background: #4df03d; border: 2px solid var(--wa-green); border-radius: 50%; position: absolute; bottom: 0; right: 0; }
 
-        /* Modal / Pop-up Settings */
-        #settings-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; }
-        .modal-content { background: white; width: 85%; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .modal-content h3 { margin-bottom: 15px; color: var(--wa-green); }
-        .modal-content input[type="text"] { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px; }
-        .modal-btns { display: flex; justify-content: flex-end; gap: 10px; }
-        .save-btn { background: var(--wa-green); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
-
-        /* Area Chat & Lainnya */
         .chat-container { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; }
         .message { position: relative; max-width: 80%; padding: 8px 12px 22px 12px; margin-bottom: 12px; font-size: 15px; border-radius: 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); word-wrap: break-word; }
         .received { background: white; align-self: flex-start; border-top-left-radius: 0; }
@@ -32,130 +34,97 @@
         .msg-meta { position: absolute; right: 8px; bottom: 4px; display: flex; align-items: center; gap: 4px; }
         .time { font-size: 10px; color: #888; }
 
-        #preview-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; }
-        #preview-img { max-width: 95%; max-height: 70%; border-radius: 5px; }
-
-        #emoji-panel { display: none; background: white; height: 200px; overflow-y: auto; padding: 10px; border-top: 1px solid #ddd; grid-template-columns: repeat(8, 1fr); gap: 10px; font-size: 24px; text-align: center; }
-        
+        /* Input Area */
         .input-area { background: #f0f0f0; padding: 8px; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
         .input-box { background: white; flex: 1; border-radius: 25px; padding: 5px 12px; display: flex; align-items: center; gap: 8px; }
         input { border: none; flex: 1; padding: 10px 0; outline: none; font-size: 16px; }
         .circle-btn { background: #008069; color: white; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; flex-shrink: 0; }
         .recording { background: #ff4b4b !important; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
         
-        #file-input, #camera-input, #change-profile-input { display: none; }
+        #settings-modal, #preview-overlay, #emoji-panel { display: none; }
+        #settings-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-content { background: white; width: 85%; padding: 20px; border-radius: 15px; }
+        
+        #file-input, #change-profile-input { display: none; }
         audio { height: 35px; width: 200px; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <div id="settings-modal">
-        <div class="modal-content">
-            <h3>Pengaturan Profil</h3>
-            <label style="display: block; margin-bottom: 10px; cursor: pointer; color: #008069; font-weight: bold;">
-                📸 Klik untuk Ganti Foto
-                <input type="file" id="change-profile-input" accept="image/*" onchange="updateProfilePic(this)">
-            </label>
-            <input type="text" id="new-name-input" placeholder="Masukkan Nama Baru...">
-            <div class="modal-btns">
-                <button onclick="document.getElementById('settings-modal').style.display='none'" style="border:none; background:none; cursor:pointer;">Batal</button>
-                <button class="save-btn" onclick="saveProfileSettings()">Simpan</button>
+    <div id="login-screen">
+        <div class="login-logo"><i data-lucide="message-square" size="60"></i></div>
+        <div class="login-title">Siapa Anda?</div>
+        <div class="user-list">
+            <div class="user-item" onclick="loginAs('Okta')">
+                <div class="user-avatar" style="background-image: url('logo.jpg')"></div>
+                <div style="font-weight: bold; font-size: 18px;">Okta</div>
+            </div>
+            <div class="user-item" onclick="loginAs('Novi')">
+                <div class="user-avatar" style="background-color: #e11d48; display: flex; align-items: center; justify-content: center; color: white;">N</div>
+                <div style="font-weight: bold; font-size: 18px;">Novi</div>
             </div>
         </div>
     </div>
 
-    <div id="preview-overlay">
-        <div style="position: absolute; top: 20px; right: 20px; color: white; cursor: pointer;" onclick="document.getElementById('preview-overlay').style.display='none'"><i data-lucide="x" size="32"></i></div>
-        <img id="preview-img" src="">
-    </div>
-
-    <div class="header" onclick="document.getElementById('settings-modal').style.display='flex'">
-        <div class="profile-pic" id="main-profile-pic"><div class="online-dot"></div></div>
-        <div class="user-info">
-            <h4 id="display-name">Novi ❤️</h4>
-            <span style="font-size: 12px; opacity: 0.9;">Online</span>
+    <div id="app-interface">
+        <div id="settings-modal">
+            <div class="modal-content">
+                <h3>Pengaturan Profil</h3>
+                <label style="display: block; margin-bottom: 10px; cursor: pointer; color: #008069;">
+                    📸 Ganti Foto Profil
+                    <input type="file" id="change-profile-input" accept="image/*" onchange="updateProfilePic(this)">
+                </label>
+                <input type="text" id="new-name-input" placeholder="Nama baru..." style="width:100%; padding:8px; margin-bottom:10px;">
+                <button onclick="saveProfileSettings()" style="background:#008069; color:white; border:none; padding:10px; border-radius:5px; width:100%;">Simpan</button>
+            </div>
         </div>
-    </div>
 
-    <div class="chat-container" id="chat-box">
-        <div class="message received">Halo Okta! Klik area nama/foto di atas untuk ganti profil ya. <div class="msg-meta"><span class="time">14:45</span></div></div>
-    </div>
-
-    <div id="emoji-panel"></div>
-
-    <div class="input-area">
-        <div class="input-box">
-            <button class="icon-btn" onclick="toggleEmoji()" style="background:none; border:none; color:#54656f;"><i data-lucide="smile"></i></button>
-            <input type="text" id="msg-input" placeholder="Ketik pesan..." autocomplete="off">
-            <label for="file-input" style="color:#54656f; cursor:pointer;"><i data-lucide="paperclip"></i></label>
-            <input type="file" id="file-input" accept="image/*,video/*" onchange="handleFile(this)">
+        <div class="header" onclick="document.getElementById('settings-modal').style.display='flex'">
+            <div class="profile-pic" id="header-pic"><div class="online-dot"></div></div>
+            <div class="user-info">
+                <h4 id="header-name">Partner</h4>
+                <span style="font-size: 12px; opacity: 0.9;">Online</span>
+            </div>
         </div>
-        
-        <button class="circle-btn" id="main-btn">
-            <i data-lucide="mic" id="btn-icon"></i>
-        </button>
+
+        <div class="chat-container" id="chat-box"></div>
+
+        <div class="input-area">
+            <div class="input-box">
+                <button class="icon-btn" style="background:none; border:none;"><i data-lucide="smile"></i></button>
+                <input type="text" id="msg-input" placeholder="Ketik pesan..." autocomplete="off">
+                <label for="file-input" style="cursor:pointer;"><i data-lucide="paperclip"></i></label>
+                <input type="file" id="file-input" accept="image/*" onchange="handleFile(this)">
+            </div>
+            <button class="circle-btn" id="main-btn">
+                <i data-lucide="mic" id="btn-icon"></i>
+            </button>
+        </div>
     </div>
 
     <script>
         lucide.createIcons();
-        const input = document.getElementById('msg-input');
         const chatBox = document.getElementById('chat-box');
+        const input = document.getElementById('msg-input');
         const btnIcon = document.getElementById('btn-icon');
         const mainBtn = document.getElementById('main-btn');
+        let currentUser = "";
 
-        // GANTI PROFIL LOGIC
-        function updateProfilePic(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    document.getElementById('main-profile-pic').style.backgroundImage = `url('${e.target.result}')`;
-                };
-                reader.readAsDataURL(input.files[0]);
-            }
+        // FUNGSI LOGIN
+        function loginAs(name) {
+            currentUser = name;
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app-interface').style.display = 'flex';
+            
+            // Set Partner name di header
+            const partnerName = (name === "Okta") ? "Novi ❤️" : "Okta Firdaus";
+            document.getElementById('header-name').innerText = partnerName;
+            
+            addMsg(`Selamat datang, <b>${name}</b>! Silahkan mulai chat.`, 'received');
         }
 
-        function saveProfileSettings() {
-            const newName = document.getElementById('new-name-input').value;
-            if(newName.trim() !== "") {
-                document.getElementById('display-name').innerText = newName;
-            }
-            document.getElementById('settings-modal').style.display = 'none';
-        }
-
-        // VN & RECORDING LOGIC
-        let mediaRecorder;
-        let audioChunks = [];
-
-        async function startRecording() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
-                audioChunks = [];
-                mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
-                mediaRecorder.onstop = () => {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/mpeg' });
-                    addMsg(`<audio controls src="${URL.createObjectURL(audioBlob)}"></audio>`, 'sent');
-                    stream.getTracks().forEach(t => t.stop());
-                };
-                mediaRecorder.start();
-                mainBtn.classList.add('recording');
-            } catch (err) { alert("Izinkan Mic di browser kamu."); }
-        }
-
-        function stopRecording() {
-            if (mediaRecorder && mediaRecorder.state === "recording") {
-                mediaRecorder.stop();
-                mainBtn.classList.remove('recording');
-            }
-        }
-
-        mainBtn.addEventListener('mousedown', () => { if(input.value.trim() === "") startRecording(); });
-        mainBtn.addEventListener('mouseup', stopRecording);
-        mainBtn.addEventListener('touchstart', (e) => { e.preventDefault(); if(input.value.trim() === "") startRecording(); });
-        mainBtn.addEventListener('touchend', stopRecording);
-
-        // FITUR DASAR LAINNYA
+        // FUNGSI PESAN & MEDIA (Tetap dipertahankan)
         function addMsg(content, type) {
             const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             const div = document.createElement('div');
@@ -180,24 +149,44 @@
             } 
         };
 
-        function handleFile(input) {
-            const file = input.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const tag = file.type.startsWith('image') ? `<img src="${e.target.result}" style="width:100%; border-radius:5px;" onclick="showPreview('${e.target.result}')">` : `<video src="${e.target.result}" controls style="width:100%;"></video>`;
-                    addMsg(tag, 'sent');
+        // VOICE NOTE REAL (MediaRecorder)
+        let mediaRecorder;
+        let audioChunks = [];
+
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/mpeg' });
+                    addMsg(`<audio controls src="${URL.createObjectURL(audioBlob)}"></audio>`, 'sent');
+                    stream.getTracks().forEach(t => t.stop());
                 };
-                reader.readAsDataURL(file);
+                mediaRecorder.start();
+                mainBtn.classList.add('recording');
+            } catch (err) { alert("Izinkan Mic di browser."); }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state === "recording") {
+                mediaRecorder.stop();
+                mainBtn.classList.remove('recording');
             }
         }
 
-        function showPreview(src) {
-            const overlay = document.getElementById('preview-overlay');
-            document.getElementById('preview-img').src = src;
-            overlay.style.display = 'flex';
-        }
+        mainBtn.addEventListener('mousedown', () => { if(input.value.trim()==="") startRecording(); });
+        mainBtn.addEventListener('mouseup', stopRecording);
+        mainBtn.addEventListener('touchstart', (e) => { e.preventDefault(); if(input.value.trim()==="") startRecording(); });
+        mainBtn.addEventListener('touchend', stopRecording);
 
+        function handleFile(input) {
+            const reader = new FileReader();
+            reader.onload = (e) => addMsg(`<img src="${e.target.result}" style="width:100%; border-radius:5px;">`, 'sent');
+            reader.readAsDataURL(input.files[0]);
+        }
+        
         input.addEventListener("keypress", (e) => { if(e.key === "Enter") mainBtn.onclick(); });
     </script>
 </body>
