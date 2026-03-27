@@ -35,7 +35,6 @@
         .profile-pic { width: 40px; height: 40px; border-radius: 50%; background: #ccc center/cover; position: relative; flex-shrink: 0; cursor: pointer; }
         .online-dot { width: 11px; height: 11px; background: #4df03d; border: 2px solid var(--wa-green); border-radius: 50%; position: absolute; bottom: 0; right: 0; }
 
-        /* Dropdown Menu Burger */
         .dropdown-menu { display: none; position: absolute; top: 50px; right: 10px; background: white; min-width: 170px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 4px; z-index: 1000; padding: 8px 0; }
         .dropdown-item { padding: 12px 16px; color: #333; font-size: 15px; cursor: pointer; }
         .dropdown-item:active { background: #f5f5f5; }
@@ -122,7 +121,7 @@
         </div>
 
         <div class="header">
-            <div class="profile-pic" id="header-pic" onclick="enlargePartnerPic()"><div class="online-dot"></div></div>
+            <div class="profile-pic" id="header-pic" onclick="showFullImg(currentPartnerPic)"><div class="online-dot"></div></div>
             <div class="user-info" style="flex: 1; cursor: pointer;" onclick="document.getElementById('settings-modal').style.display='flex'">
                 <h4 id="header-name">Partner</h4>
                 <span id="header-status" style="font-size: 12px; opacity: 0.9;">Offline</span>
@@ -255,7 +254,8 @@
                 
                 const statusEl = document.getElementById('header-status');
                 const dotEl = document.querySelector('.online-dot');
-                
+                const headerPic = document.getElementById('header-pic');
+
                 if (partnerOnline) {
                     statusEl.innerText = "Online";
                     dotEl.style.background = "#4df03d";
@@ -267,11 +267,37 @@
 
                 if(partnerData.pic) {
                     currentPartnerPic = partnerData.pic;
-                    document.getElementById('header-pic').style.backgroundImage = `url('${partnerData.pic}')`;
+                    headerPic.style.backgroundImage = `url('${partnerData.pic}')`;
+                    headerPic.style.backgroundSize = 'cover';
                 }
-                if(profiles['Okta']?.pic) document.getElementById('login-pic-okta').style.backgroundImage = `url('${profiles['Okta'].pic}')`;
-                if(profiles['Novi']?.pic) document.getElementById('login-pic-novi').style.backgroundImage = `url('${profiles['Novi'].pic}')`;
+
+                if(profiles['Okta']?.pic) {
+                    const oktaLoginPic = document.getElementById('login-pic-okta');
+                    if(oktaLoginPic) { oktaLoginPic.style.backgroundImage = `url('${profiles['Okta'].pic}')`; oktaLoginPic.innerText = ""; }
+                }
+                if(profiles['Novi']?.pic) {
+                    const noviLoginPic = document.getElementById('login-pic-novi');
+                    if(noviLoginPic) { noviLoginPic.style.backgroundImage = `url('${profiles['Novi'].pic}')`; noviLoginPic.innerText = ""; }
+                }
             });
+        }
+
+        function updateMyProfilePic(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    db.ref(`profiles/${currentUser}`).update({ pic: e.target.result });
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function saveMyProfileSettings() {
+            const newName = document.getElementById('new-name-input').value;
+            if (newName.trim() !== "") {
+                db.ref(`profiles/${currentUser}`).update({ name: newName });
+            }
+            document.getElementById('settings-modal').style.display = 'none';
         }
 
         function markMessagesAsRead() {
@@ -380,7 +406,6 @@
             lucide.createIcons();
         }
 
-        // Fitur Tombol Kirim Otomatis
         input.addEventListener('input', () => { 
             const isTyping = input.value.trim() !== "";
             btnIcon.setAttribute('data-lucide', isTyping ? 'send-horizontal' : 'mic'); 
@@ -409,7 +434,7 @@
             }
         }
 
-        function showFullImg(src) { document.getElementById('preview-img').src = src; document.getElementById('preview-overlay').style.display = 'flex'; }
+        function showFullImg(src) { if(!src) return; document.getElementById('preview-img').src = src; document.getElementById('preview-overlay').style.display = 'flex'; }
         function downloadImage() { const a = document.createElement('a'); a.href = document.getElementById('preview-img').src; a.download = `WA_${Date.now()}.png`; a.click(); }
         function clearHistory() { if(confirm("Hapus semua chat?")) db.ref('chats').remove(); }
 
@@ -443,7 +468,6 @@
             if (saved) { currentUser = saved; enterApp(); }
         };
 
-        // Tutup dropdown jika klik di luar
         window.onclick = function(event) {
             if (!event.target.matches('[data-lucide="more-vertical"]')) {
                 const dropdown = document.getElementById('burger-dropdown');
