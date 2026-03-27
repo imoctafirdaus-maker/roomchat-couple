@@ -42,10 +42,18 @@
         .sent { background: var(--wa-light-green); align-self: flex-end; border-top-right-radius: 0; }
         .msg-meta { position: absolute; right: 8px; bottom: 4px; display: flex; align-items: center; gap: 4px; }
         .time { font-size: 10px; color: #888; }
+        
+        /* Sticker Style */
+        .sticker-msg { background: transparent !important; box-shadow: none !important; padding: 0 !important; }
+        .sticker-img { width: 130px; height: 130px; object-fit: contain; }
 
-        /* Emoji & Inputs */
-        #emoji-panel { display: none; background: white; height: 200px; overflow-y: auto; padding: 10px; border-top: 1px solid #ddd; grid-template-columns: repeat(8, 1fr); gap: 10px; font-size: 24px; text-align: center; }
-        .emoji-item { cursor: pointer; }
+        /* Emoji & Sticker Panel */
+        #emoji-panel { display: none; background: white; height: 250px; flex-direction: column; border-top: 1px solid #ddd; }
+        .panel-tabs { display: flex; background: #f0f0f0; border-bottom: 1px solid #ddd; }
+        .tab-btn { flex: 1; padding: 10px; border: none; background: none; cursor: pointer; color: #54656f; }
+        .tab-btn.active { border-bottom: 3px solid var(--wa-dark); color: var(--wa-dark); }
+        .panel-content { flex: 1; overflow-y: auto; padding: 10px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; font-size: 24px; text-align: center; }
+        .sticker-item { width: 100%; aspect-ratio: 1; object-fit: contain; cursor: pointer; }
 
         .input-area { background: #f0f0f0; padding: 8px; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
         .input-box { background: white; flex: 1; border-radius: 25px; padding: 5px 12px; display: flex; align-items: center; gap: 8px; }
@@ -125,12 +133,19 @@
             </div>
             <div style="display: flex; gap: 15px;">
                 <i data-lucide="rotate-cw" size="20" onclick="location.reload()" style="cursor: pointer;"></i>
-                <i data-lucide="log-out" size="20" onclick="location.reload()" style="cursor: pointer;"></i>
+                <i data-lucide="log-out" size="20" onclick="logout()" style="cursor: pointer;"></i>
             </div>
         </div>
 
         <div class="chat-container" id="chat-box"></div>
-        <div id="emoji-panel"></div>
+
+        <div id="emoji-panel">
+            <div class="panel-tabs">
+                <button class="tab-btn active" onclick="switchTab('emoji', this)"><i data-lucide="smile" size="18"></i></button>
+                <button class="tab-btn" onclick="switchTab('sticker', this)"><i data-lucide="box" size="18"></i></button>
+            </div>
+            <div id="panel-content" class="panel-content"></div>
+        </div>
 
         <div class="input-area">
             <div class="input-box">
@@ -154,44 +169,56 @@
         const btnIcon = document.getElementById('btn-icon');
         const mainBtn = document.getElementById('main-btn');
         const emojiPanel = document.getElementById('emoji-panel');
+        const panelContent = document.getElementById('panel-content');
         let currentUser = "";
 
-        const userPins = {
-            'Okta': '14102000',
-            'Novi': '14112001'
-        };
+        const userPins = { 'Okta': '14102000', 'Novi': '14112001' };
+
+        const stickerList = [
+            "https://cdn-icons-png.flaticon.com/512/3884/3884851.png",
+            "https://cdn-icons-png.flaticon.com/512/3884/3884871.png",
+            "https://cdn-icons-png.flaticon.com/512/3884/3884864.png",
+            "https://cdn-icons-png.flaticon.com/512/4148/4148657.png",
+            "https://cdn-icons-png.flaticon.com/512/4148/4148671.png",
+            "https://cdn-icons-png.flaticon.com/512/2598/2598811.png"
+        ];
 
         function saveToLocal(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
         function getFromLocal(key) { const data = localStorage.getItem(key); return data ? JSON.parse(data) : null; }
 
+        // --- FUNGSI LOGIN & AUTOLOGIN ---
         function loginAs(name) {
             const enteredPin = prompt(`Masukkan PIN untuk ${name}:`);
             if (enteredPin === userPins[name]) {
                 currentUser = name;
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('app-interface').style.display = 'flex';
-                document.getElementById('settings-title').innerText = `Profil ${currentUser}`;
-                loadProfile();
-                loadChatHistory();
-            } else {
-                alert("PIN Salah! Akses ditolak.");
+                saveToLocal('logged_user', name); // Simpan status login
+                enterApp();
+            } else { alert("PIN Salah!"); }
+        }
+
+        function enterApp() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app-interface').style.display = 'flex';
+            document.getElementById('settings-title').innerText = `Profil ${currentUser}`;
+            loadProfile();
+            loadChatHistory();
+        }
+
+        function logout() {
+            if(confirm("Apakah kamu ingin keluar (Logout)? PIN akan diminta kembali saat masuk.")) {
+                localStorage.removeItem('logged_user');
+                location.reload();
             }
         }
 
+        // --- SISANYA TETAP SAMA ---
         function loadProfile() {
             const partner = (currentUser === "Okta") ? "Novi" : "Okta";
             const partnerName = getFromLocal(`name_${partner}`) || (partner === "Novi" ? "Novi ❤️" : "Okta Firdaus");
             const partnerPic = getFromLocal(`pic_${partner}`);
-            
             document.getElementById('header-name').innerText = partnerName;
-            if(partnerPic) {
-                document.getElementById('header-pic').style.backgroundImage = `url('${partnerPic}')`;
-            } else {
-                document.getElementById('header-pic').style.backgroundImage = "none";
-            }
-            
-            const oktaPic = getFromLocal('pic_Okta');
-            const noviPic = getFromLocal('pic_Novi');
+            if(partnerPic) document.getElementById('header-pic').style.backgroundImage = `url('${partnerPic}')`;
+            const oktaPic = getFromLocal('pic_Okta'), noviPic = getFromLocal('pic_Novi');
             if(oktaPic) document.getElementById('login-pic-okta').style.backgroundImage = `url('${oktaPic}')`;
             if(noviPic) document.getElementById('login-pic-novi').style.backgroundImage = `url('${noviPic}')`;
         }
@@ -200,9 +227,7 @@
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    const picData = e.target.result;
-                    saveToLocal(`pic_${currentUser}`, picData);
-                    alert("Foto profil kamu berhasil diubah!");
+                    saveToLocal(`pic_${currentUser}`, e.target.result);
                     loadProfile();
                 };
                 reader.readAsDataURL(input.files[0]);
@@ -211,11 +236,7 @@
 
         function saveMyProfileSettings() {
             const newName = document.getElementById('new-name-input').value;
-            if(newName.trim() !== "") {
-                saveToLocal(`name_${currentUser}`, newName);
-                alert("Nama kamu berhasil diubah!");
-                loadProfile();
-            }
+            if(newName.trim() !== "") { saveToLocal(`name_${currentUser}`, newName); loadProfile(); }
             document.getElementById('settings-modal').style.display = 'none';
         }
 
@@ -223,134 +244,119 @@
             chatBox.innerHTML = "";
             const history = getFromLocal('chat_history') || [];
             history.forEach(msg => {
-                const bubbleType = (msg.sender === currentUser) ? 'sent' : 'received';
-                renderMsg(msg.content, bubbleType, msg.time);
+                const type = (msg.sender === currentUser) ? 'sent' : 'received';
+                renderMsg(msg.content, type, msg.time, msg.isSticker);
             });
         }
 
-        function addMsg(content, type) {
+        function addMsg(content, type, isSticker = false) {
             const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             const history = getFromLocal('chat_history') || [];
-            history.push({ sender: currentUser, content: content, time: time });
+            history.push({ sender: currentUser, content: content, time: time, isSticker: isSticker });
             saveToLocal('chat_history', history);
-            renderMsg(content, type, time);
-            
+            renderMsg(content, type, time, isSticker);
             const audio = document.getElementById('notif-sound');
-            audio.currentTime = 0;
-            audio.play().catch(e => console.log("Gagal putar suara:", e));
+            audio.currentTime = 0; audio.play().catch(e => {});
         }
 
-        function renderMsg(content, type, time) {
+        function renderMsg(content, type, time, isSticker = false) {
             const div = document.createElement('div');
-            div.className = `message ${type}`;
-            div.innerHTML = `${content}<div class="msg-meta"><span class="time">${time}</span> ${type==='sent'?'<i data-lucide="check-check" size="14" color="#34b7f1"></i>':''}</div>`;
+            div.className = `message ${type} ${isSticker ? 'sticker-msg' : ''}`;
+            if(isSticker) {
+                div.innerHTML = `<img src="${content}" class="sticker-img"> <div class="msg-meta"><span class="time">${time}</span></div>`;
+            } else {
+                div.innerHTML = `${content}<div class="msg-meta"><span class="time">${time}</span> ${type==='sent'?'<i data-lucide="check-check" size="14" color="#34b7f1"></i>':''}</div>`;
+            }
             chatBox.appendChild(div);
             chatBox.scrollTop = chatBox.scrollHeight;
             lucide.createIcons();
         }
 
-        function clearHistory() {
-            if(confirm("Hapus semua riwayat?")) { localStorage.clear(); location.reload(); }
+        function toggleEmoji() { 
+            const isOpen = emojiPanel.style.display === 'flex';
+            emojiPanel.style.display = isOpen ? 'none' : 'flex';
+            if(!isOpen) switchTab('emoji', document.querySelector('.tab-btn'));
         }
 
-        input.addEventListener('input', () => {
-            btnIcon.setAttribute('data-lucide', input.value.trim() !== "" ? 'send-horizontal' : 'mic');
-            lucide.createIcons();
-        });
-
-        mainBtn.addEventListener('click', () => {
-            if(input.value.trim() !== "") {
-                addMsg(input.value, 'sent');
-                input.value = "";
-                btnIcon.setAttribute('data-lucide', 'mic');
-                lucide.createIcons();
-                emojiPanel.style.display = 'none';
+        function switchTab(type, btn) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            panelContent.innerHTML = "";
+            if(type === 'emoji') {
+                const emojis = ["😀","😃","😄","😁","😆","😅","😂","🤣","😊","😇","🥰","😍","😘","😋","😛","😜","🤪","🤨","🧐","😎","🤩","🥳","😏","😒","😔","😟","😕","🙁","☹️","😣","😫","😩","🥺","😢","😭","😤","😠","😡","🤬","🤯","😳","🥵","🥶","😱","😨","😰","😥","😓","🤗","🤔","🤭","🤫","🤥","😶","😐","😑","😬","🙄","😯","😦","😧","😮","😲","🥱","😴","🤤","😪","😵","🤐","🥴","🤢","🤮","🤧","😷","🤒","🤕","🤑","🤠","😈","👿","👹","👺","🤡","💩","💀","☠️","👽","👾","🤖","🎃","😺","😸","😹","😻","😼","😽","🙀","😿","😾","❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟"];
+                emojis.forEach(e => {
+                    const span = document.createElement('span');
+                    span.innerText = e; span.style.cursor = 'pointer';
+                    span.onclick = () => { input.value += e; input.dispatchEvent(new Event('input')); };
+                    panelContent.appendChild(span);
+                });
+            } else {
+                panelContent.style.gridTemplateColumns = "repeat(3, 1fr)";
+                stickerList.forEach(s => {
+                    const img = document.createElement('img');
+                    img.src = s; img.className = 'sticker-item';
+                    img.onclick = () => { addMsg(s, 'sent', true); emojiPanel.style.display = 'none'; };
+                    panelContent.appendChild(img);
+                });
             }
-        });
+        }
+
+        function clearHistory() { if(confirm("Hapus semua riwayat?")) { localStorage.clear(); location.reload(); } }
+        input.addEventListener('input', () => { btnIcon.setAttribute('data-lucide', input.value.trim() !== "" ? 'send-horizontal' : 'mic'); lucide.createIcons(); });
+        mainBtn.addEventListener('click', () => { if(input.value.trim() !== "") { addMsg(input.value, 'sent'); input.value = ""; btnIcon.setAttribute('data-lucide', 'mic'); lucide.createIcons(); emojiPanel.style.display = 'none'; } });
 
         function handleFile(inputElement) {
             const file = inputElement.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    const content = file.type.startsWith('image') 
-                        ? `<img src="${e.target.result}" class="clickable-img" onclick="showFullImg('${e.target.result}')">` 
-                        : `<video src="${e.target.result}" controls style="width:100%;"></video>`;
+                    const content = file.type.startsWith('image') ? `<img src="${e.target.result}" class="clickable-img" onclick="showFullImg('${e.target.result}')">` : `<video src="${e.target.result}" controls style="width:100%;"></video>`;
                     addMsg(content, 'sent');
                 };
                 reader.readAsDataURL(file);
             }
         }
 
-        function showFullImg(src) {
-            document.getElementById('preview-img').src = src;
-            document.getElementById('preview-overlay').style.display = 'flex';
-            lucide.createIcons();
-        }
-
-        function downloadImage() {
-            const imgSrc = document.getElementById('preview-img').src;
-            const link = document.createElement('a');
-            link.href = imgSrc;
-            link.download = `WA_Couple_${Date.now()}.png`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
+        function showFullImg(src) { document.getElementById('preview-img').src = src; document.getElementById('preview-overlay').style.display = 'flex'; lucide.createIcons(); }
+        function downloadImage() { const a = document.createElement('a'); a.href = document.getElementById('preview-img').src; a.download = `WA_Pic_${Date.now()}.png`; a.click(); }
         async function shareImage() {
-            const imgSrc = document.getElementById('preview-img').src;
-            if (navigator.share) {
-                try {
-                    const res = await fetch(imgSrc);
-                    const blob = await res.blob();
-                    const file = new File([blob], "foto.png", { type: blob.type });
-                    await navigator.share({ files: [file], title: 'Bagikan Foto' });
-                } catch (err) { console.log("Gagal berbagi:", err); }
-            } else { alert("Browser tidak mendukung share."); }
+            const res = await fetch(document.getElementById('preview-img').src);
+            const blob = await res.blob();
+            const file = new File([blob], "foto.png", { type: blob.type });
+            if (navigator.share) await navigator.share({ files: [file] });
         }
 
-        const emojis = ["😀","😃","😄","😁","😆","😅","😂","🤣","😊","😇","🙂","🙃","😉","😌","😍","🥰","😘","😗","😙","😚","😋","😛","😝","😜","🤪","🤨","🧐","🤓","😎","🤩","🥳","😏","😒","😞","😔","😟","😕","🙁","☹️","😣","😖","😫","😩","🥺","😢","😭","😤","😠","😡","🤬","🤯","😳","🥵","🥶","😱","😨","😰","😥","😓","🤗","🤔","🤭","🤫","🤥","😶","😐","😑","😬","🙄","😯","😦","😧","😮","😲","🥱","😴","🤤","😪","😵","🤐","🥴","🤢","🤮","🤧","😷","🤒","🤕","🤑","🤠","😈","👿","👹","👺","🤡","💩","Ghosts","💀","☠️","👽","👾","🤖","🎃","😺","😸","😹","😻","😼","😽","🙀","😿","😾","❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟"];
-        emojis.forEach(e => {
-            const span = document.createElement('span');
-            span.className = 'emoji-item';
-            span.innerText = e;
-            span.onclick = () => { input.value += e; input.dispatchEvent(new Event('input')); };
-            emojiPanel.appendChild(span);
-        });
-        function toggleEmoji() { emojiPanel.style.display = emojiPanel.style.display === 'grid' ? 'none' : 'grid'; }
-
-        let mediaRecorder;
-        let audioChunks = [];
+        let mediaRecorder, audioChunks = [];
         async function startRecording() {
             if(input.value.trim() !== "") return;
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
-                audioChunks = [];
-                mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
-                mediaRecorder.onstop = () => {
-                    const reader = new FileReader();
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/mpeg' });
-                    reader.onload = () => addMsg(`<audio controls src="${reader.result}"></audio>`, 'sent');
-                    reader.readAsDataURL(audioBlob);
-                    stream.getTracks().forEach(t => t.stop());
-                };
-                mediaRecorder.start();
-                mainBtn.classList.add('recording');
-            } catch (err) { alert("Izinkan Mic."); }
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+            mediaRecorder.onstop = () => {
+                const reader = new FileReader();
+                reader.onload = () => addMsg(`<audio controls src="${reader.result}"></audio>`, 'sent');
+                reader.readAsDataURL(new Blob(audioChunks, { type: 'audio/mpeg' }));
+                stream.getTracks().forEach(t => t.stop());
+            };
+            mediaRecorder.start(); mainBtn.classList.add('recording');
         }
-        function stopRecording() { if (mediaRecorder && mediaRecorder.state === "recording") { mediaRecorder.stop(); mainBtn.classList.remove('recording'); } }
+        function stopRecording() { if (mediaRecorder?.state === "recording") { mediaRecorder.stop(); mainBtn.classList.remove('recording'); } }
 
-        mainBtn.addEventListener('mousedown', startRecording);
-        mainBtn.addEventListener('mouseup', stopRecording);
+        mainBtn.addEventListener('mousedown', startRecording); mainBtn.addEventListener('mouseup', stopRecording);
         mainBtn.addEventListener('touchstart', (e) => { if(input.value.trim()==="") { e.preventDefault(); startRecording(); } });
         mainBtn.addEventListener('touchend', stopRecording);
         input.addEventListener("keypress", (e) => { if(e.key === "Enter") mainBtn.click(); });
 
-        window.onload = function() {
-            const oktaPic = getFromLocal('pic_Okta');
-            const noviPic = getFromLocal('pic_Novi');
+        window.onload = () => {
+            // Cek apakah ada user yang sudah login sebelumnya
+            const savedUser = getFromLocal('logged_user');
+            if (savedUser) {
+                currentUser = savedUser;
+                enterApp();
+            }
+
+            const oktaPic = getFromLocal('pic_Okta'), noviPic = getFromLocal('pic_Novi');
             if(oktaPic) document.getElementById('login-pic-okta').style.backgroundImage = `url('${oktaPic}')`;
             if(noviPic) document.getElementById('login-pic-novi').style.backgroundImage = `url('${noviPic}')`;
         };
