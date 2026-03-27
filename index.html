@@ -72,11 +72,11 @@
         <div class="login-title">Siapa Anda?</div>
         <div class="user-list">
             <div class="user-item" onclick="loginAs('Okta')">
-                <div class="user-avatar" id="login-pic-okta" style="background-color: #075e54; display: flex; align-items: center; justify-content: center; color: white;">O</div>
+                <div class="user-avatar" id="login-pic-okta" style="background-color: #075e54; display: flex; align-items: center; justify-content: center; color: white; background-size: cover; background-position: center;">O</div>
                 <div style="font-weight: bold; font-size: 18px;">Okta</div>
             </div>
             <div class="user-item" onclick="loginAs('Novi')">
-                <div class="user-avatar" id="login-pic-novi" style="background-color: #e11d48; display: flex; align-items: center; justify-content: center; color: white;">N</div>
+                <div class="user-avatar" id="login-pic-novi" style="background-color: #e11d48; display: flex; align-items: center; justify-content: center; color: white; background-size: cover; background-position: center;">N</div>
                 <div style="font-weight: bold; font-size: 18px;">Novi</div>
             </div>
         </div>
@@ -86,13 +86,13 @@
     <div id="app-interface">
         <div id="settings-modal">
             <div class="modal-content">
-                <h3>Pengaturan Profil Partner</h3>
+                <h3 id="settings-title">Pengaturan Profil</h3>
                 <label style="display: block; margin-bottom: 15px; cursor: pointer; color: #008069; font-weight: bold;">
-                    📸 Ganti Foto Partner
-                    <input type="file" id="change-profile-input" accept="image/*" onchange="updateProfilePic(this)">
+                    📸 Ganti Foto Saya
+                    <input type="file" id="change-profile-input" accept="image/*" onchange="updateMyProfilePic(this)">
                 </label>
-                <input type="text" id="new-name-input" placeholder="Nama partner baru..." style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ddd; border-radius:5px;">
-                <button onclick="saveProfileSettings()" style="background:#008069; color:white; border:none; padding:10px; border-radius:5px; width:100%; font-weight:bold;">Simpan</button>
+                <input type="text" id="new-name-input" placeholder="Ganti nama saya..." style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ddd; border-radius:5px;">
+                <button onclick="saveMyProfileSettings()" style="background:#008069; color:white; border:none; padding:10px; border-radius:5px; width:100%; font-weight:bold;">Simpan</button>
             </div>
         </div>
 
@@ -145,48 +145,61 @@
         function saveToLocal(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
         function getFromLocal(key) { const data = localStorage.getItem(key); return data ? JSON.parse(data) : null; }
 
-        // --- LOGIN & PROFILE ---
+        // --- LOGIN & PROFILE LOGIC (FIXED) ---
         function loginAs(name) {
             currentUser = name;
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('app-interface').style.display = 'flex';
+            document.getElementById('settings-title').innerText = `Profil ${currentUser}`;
             loadProfile();
             loadChatHistory();
         }
 
         function loadProfile() {
-            const partnerName = (currentUser === "Okta") ? (getFromLocal('name_novi') || "Novi ❤️") : (getFromLocal('name_okta') || "Okta Firdaus");
-            const partnerPic = (currentUser === "Okta") ? getFromLocal('pic_novi') : getFromLocal('pic_okta');
+            // Tentukan siapa partnernya
+            const partner = (currentUser === "Okta") ? "Novi" : "Okta";
             
+            // Ambil data partner dari storage
+            const partnerName = getFromLocal(`name_${partner}`) || (partner === "Novi" ? "Novi ❤️" : "Okta Firdaus");
+            const partnerPic = getFromLocal(`pic_${partner}`);
+            
+            // Tampilkan data partner di header (karena ini chat dengan partner)
             document.getElementById('header-name').innerText = partnerName;
-            if(partnerPic) document.getElementById('header-pic').style.backgroundImage = `url('${partnerPic}')`;
+            if(partnerPic) {
+                document.getElementById('header-pic').style.backgroundImage = `url('${partnerPic}')`;
+            } else {
+                document.getElementById('header-pic').style.backgroundImage = "none";
+            }
             
-            // Login avatars
-            const oktaSavedPic = getFromLocal('pic_okta');
-            const noviSavedPic = getFromLocal('pic_novi');
-            if(oktaSavedPic) document.getElementById('login-pic-okta').style.backgroundImage = `url('${oktaSavedPic}')`;
-            if(noviSavedPic) document.getElementById('login-pic-novi').style.backgroundImage = `url('${noviSavedPic}')`;
+            // Update foto di login screen agar sinkron
+            const oktaPic = getFromLocal('pic_Okta');
+            const noviPic = getFromLocal('pic_Novi');
+            if(oktaPic) document.getElementById('login-pic-okta').style.backgroundImage = `url('${oktaPic}')`;
+            if(noviPic) document.getElementById('login-pic-novi').style.backgroundImage = `url('${noviPic}')`;
         }
 
-        function updateProfilePic(input) {
+        // Fungsi mengganti foto diri sendiri
+        function updateMyProfilePic(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const picData = e.target.result;
-                    document.getElementById('header-pic').style.backgroundImage = `url('${picData}')`;
-                    const key = (currentUser === "Okta") ? 'pic_novi' : 'pic_okta';
-                    saveToLocal(key, picData);
+                    // Simpan sebagai foto profil diri sendiri
+                    saveToLocal(`pic_${currentUser}`, picData);
+                    alert("Foto profil kamu berhasil diubah!");
+                    loadProfile(); // Refresh tampilan
                 };
                 reader.readAsDataURL(input.files[0]);
             }
         }
 
-        function saveProfileSettings() {
-            const name = document.getElementById('new-name-input').value;
-            if(name.trim() !== "") {
-                document.getElementById('header-name').innerText = name;
-                const key = (currentUser === "Okta") ? 'name_novi' : 'name_okta';
-                saveToLocal(key, name);
+        // Fungsi mengganti nama diri sendiri
+        function saveMyProfileSettings() {
+            const newName = document.getElementById('new-name-input').value;
+            if(newName.trim() !== "") {
+                saveToLocal(`name_${currentUser}`, newName);
+                alert("Nama kamu berhasil diubah!");
+                loadProfile();
             }
             document.getElementById('settings-modal').style.display = 'none';
         }
@@ -257,7 +270,6 @@
             document.getElementById('preview-overlay').style.display = 'flex';
         }
 
-        // EMOJI & RECORDER
         const emojis = ["😀","😃","😄","😁","😆","😅","😂","🤣","😊","😇","🙂","🙃","😉","😌","😍","🥰","😘","😗","😙","😚","😋","😛","😝","😜","🤪","🤨","🧐","🤓","😎","🤩","🥳","😏","😒","😞","😔","😟","😕","🙁","☹️","😣","😖","😫","😩","🥺","😢","😭","😤","😠","😡","🤬","🤯","😳","🥵","🥶","😱","😨","😰","😥","😓","🤗","🤔","🤭","🤫","🤥","😶","😐","😑","😬","🙄","😯","😦","😧","😮","😲","🥱","😴","🤤","😪","😵","🤐","🥴","🤢","🤮","🤧","😷","🤒","🤕","🤑","🤠","😈","👿","👹","👺","🤡","💩","👻","💀","☠️","👽","👾","🤖","🎃","😺","😸","😹","😻","😼","😽","🙀","😿","😾","❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟"];
         emojis.forEach(e => {
             const span = document.createElement('span');
@@ -296,7 +308,13 @@
         mainBtn.addEventListener('touchend', stopRecording);
         input.addEventListener("keypress", (e) => { if(e.key === "Enter") mainBtn.click(); });
 
-        window.onload = loadProfile;
+        window.onload = function() {
+            // Load foto di login screen saat pertama kali buka
+            const oktaPic = getFromLocal('pic_Okta');
+            const noviPic = getFromLocal('pic_Novi');
+            if(oktaPic) document.getElementById('login-pic-okta').style.backgroundImage = `url('${oktaPic}')`;
+            if(noviPic) document.getElementById('login-pic-novi').style.backgroundImage = `url('${noviPic}')`;
+        };
     </script>
 </body>
 </html>
