@@ -31,8 +31,7 @@
         .input-box { background: white; flex: 1; border-radius: 25px; padding: 5px 12px; display: flex; align-items: center; gap: 8px; }
         input { border: none; flex: 1; padding: 10px 0; outline: none; font-size: 16px; }
         .circle-btn { background: #008069; color: white; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; }
-        video { border-radius: 10px; max-width: 100%; background: black; }
-        audio.vn { height: 35px; width: 200px; }
+        video, img { border-radius: 10px; max-width: 100%; display: block; margin-bottom: 5px; }
     </style>
 </head>
 <body onclick="enableAudioOnFirstClick()">
@@ -45,14 +44,8 @@
         <div class="login-logo"></div>
         <h3 style="margin-bottom:20px; color:#54656f;">Siapa Anda?</h3>
         <div class="user-list">
-            <div class="user-item" onclick="loginAs('Okta')">
-                <div class="user-avatar" style="background-color:#075e54; color:white; display:flex; align-items:center; justify-content:center; width:45px; height:45px; border-radius:50%;">O</div>
-                <b>Okta</b>
-            </div>
-            <div class="user-item" onclick="loginAs('Novi')">
-                <div class="user-avatar" style="background-color:#e11d48; color:white; display:flex; align-items:center; justify-content:center; width:45px; height:45px; border-radius:50%;">N</div>
-                <b>Novi</b>
-            </div>
+            <div class="user-item" onclick="loginAs('Okta')"><b>Okta</b></div>
+            <div class="user-item" onclick="loginAs('Novi')"><b>Novi</b></div>
         </div>
     </div>
 
@@ -114,34 +107,29 @@
         function startApp() {
             lucide.createIcons();
             db.ref(`profiles/${currentUser}`).update({ status: "Online" });
-            db.ref(`profiles/${currentUser}`).onDisconnect().update({ status: "Offline", lastSeen: new Date().toLocaleTimeString() });
+            db.ref(`profiles/${currentUser}`).onDisconnect().update({ status: "Offline" });
 
             const partner = currentUser === "Okta" ? "Novi" : "Okta";
-            db.ref(`profiles/${partner}`).on('value', s => {
-                const d = s.val() || {};
-                document.getElementById('header-name').innerText = d.name || partner;
-                document.getElementById('header-status').innerText = d.status === "Online" ? "Online" : "Offline";
-            });
-
-            // Perbaikan Logika Suara
-            db.ref('chats').limitToLast(1).on('child_added', s => {
-                const msg = s.val();
-                if (!isFirstLoad) {
-                    renderMsg(msg);
-                    if (msg.sender !== currentUser) {
-                        audio.currentTime = 0;
-                        audio.play().catch(e => console.log("Audio block"));
-                    }
-                }
-            });
             
-            db.ref('chats').once('value', s => {
+            // Listen Chat & Ping
+            db.ref('chats').on('value', s => {
+                const box = document.getElementById('chat-box');
+                box.innerHTML = "";
                 const data = s.val();
                 if(data) {
-                    document.getElementById('chat-box').innerHTML = "";
+                    const keys = Object.keys(data);
+                    const lastMsg = data[keys[keys.length - 1]];
+                    
                     Object.values(data).forEach(m => renderMsg(m));
+                    
+                    // Bunyi Ping jika pesan baru masuk dari partner
+                    if (!isFirstLoad && lastMsg.sender !== currentUser) {
+                        audio.currentTime = 0;
+                        audio.play().catch(e => console.log("Audio ditahan browser"));
+                    }
                 }
                 isFirstLoad = false;
+                box.scrollTop = box.scrollHeight;
             });
         }
 
@@ -149,9 +137,13 @@
             const box = document.getElementById('chat-box');
             const div = document.createElement('div');
             div.className = `message ${msg.sender === currentUser ? 'sent' : 'received'}`;
-            div.innerHTML = `${msg.content}<div class="msg-meta"><span class="time">${msg.time}</span></div>`;
+            
+            let content = msg.content;
+            if(msg.type === 'image') content = `<img src="${msg.content}">`;
+            if(msg.type === 'video') content = `<video src="${msg.content}" controls playsinline></video>`;
+            
+            div.innerHTML = `${content}<div class="msg-meta"><span class="time">${msg.time}</span></div>`;
             box.appendChild(div);
-            box.scrollTop = box.scrollHeight;
         }
 
         document.getElementById('main-btn').onclick = () => {
@@ -160,37 +152,33 @@
                 db.ref('chats').push({
                     sender: currentUser,
                     content: inp.value,
-                    time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-                    timestamp: Date.now()
+                    type: 'text',
+                    time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
                 });
                 inp.value = "";
             }
         };
 
-        // Perbaikan Fitur Video
         function handleFile(el) {
             const file = el.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    let content = "";
-                    if (file.type.startsWith('image')) {
-                        content = `<img src="${e.target.result}" style="width:100%; border-radius:10px;">`;
-                    } else if (file.type.startsWith('video')) {
-                        content = `<video src="${e.target.result}" controls playsinline style="width:100%;"></video>`;
-                    }
-                    
-                    if (content) {
-                        db.ref('chats').push({
-                            sender: currentUser,
-                            content: content,
-                            time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-                            timestamp: Date.now()
-                        });
-                    }
-                };
-                reader.readAsDataURL(file);
+            if (!file) return;
+
+            // Batasi ukuran file (Max 5MB agar Firebase tidak error)
+            if (file.size > 5242880) {
+                alert("File terlalu besar! Maksimal 5MB agar tidak error.");
+                return;
             }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                db.ref('chats').push({
+                    sender: currentUser,
+                    content: e.target.result,
+                    type: file.type.startsWith('image') ? 'image' : 'video',
+                    time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
+                });
+            };
+            reader.readAsDataURL(file);
         }
 
         window.onload = () => {
