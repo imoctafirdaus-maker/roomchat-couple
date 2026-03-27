@@ -22,7 +22,19 @@
         
         .header { background: var(--wa-green); color: white; padding: 10px 16px; display: flex; align-items: center; gap: 12px; height: 60px; z-index: 100; position: relative; }
         .profile-pic { width: 40px; height: 40px; border-radius: 50%; background: #ccc center/cover; cursor: pointer; transition: 0.3s; border: 1px solid rgba(255,255,255,0.2); }
-        .profile-pic.zoom { position: fixed; top: 20%; left: 10%; width: 80vw; height: 80vw; border-radius: 10px; z-index: 1000; box-shadow: 0 0 100px rgba(0,0,0,0.5); }
+        
+        /* PERBAIKAN: Z-Index Zoom agar tidak gelap */
+        .profile-pic.zoom { 
+            position: fixed; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            width: 85vw; 
+            height: 85vw; 
+            border-radius: 10px; 
+            z-index: 2000; 
+            box-shadow: 0 0 100px rgba(0,0,0,0.5); 
+        }
         
         .chat-container { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; }
         .message { position: relative; max-width: 80%; padding: 6px 10px 18px 10px; margin-bottom: 8px; font-size: 15px; border-radius: 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); word-wrap: break-word; cursor: pointer; }
@@ -47,7 +59,18 @@
         .emoji-item { font-size: 26px; text-align: center; cursor: pointer; padding: 5px; }
         .sticker-item { width: 100%; aspect-ratio: 1/1; object-fit: cover; cursor: pointer; border-radius: 5px; }
         
-        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 500; }
+        /* PERBAIKAN: Overlay di bawah Foto Zoom */
+        .overlay { 
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.8); 
+            z-index: 1500; 
+        }
+
         .menu-dropdown { display: none; position: absolute; top: 50px; right: 10px; background: white; color: black; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); padding: 5px; z-index: 1001; min-width: 160px; }
         .menu-item { padding: 12px 15px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 10px; border-radius: 5px; }
 
@@ -158,7 +181,6 @@
         }
 
         function logout() {
-            // Update status manual sebelum logout
             if(currentUser) db.ref(`profiles/${currentUser}`).update({ status: `Terakhir dilihat ${getTime()}` });
             localStorage.removeItem('logged_user_oknov');
             location.reload();
@@ -170,16 +192,12 @@
             initStickers();
             const partner = currentUser === "Okta" ? "Novi" : "Okta";
             
-            // LOGIKA ONLINE & TERAKHIR DILIHAT
+            // ONLINE STATUS
             const userStatusRef = db.ref(`profiles/${currentUser}`);
             userStatusRef.update({ status: "Online" });
-            
-            // Jika koneksi terputus (aplikasi ditutup paksa/browser mati)
-            userStatusRef.onDisconnect().update({ 
-                status: `Terakhir dilihat ${getTime()}` 
-            });
+            userStatusRef.onDisconnect().update({ status: `Terakhir dilihat ${getTime()}` });
 
-            // Pantau status Partner
+            // PARTNER STATUS
             db.ref(`profiles/${partner}`).on('value', s => {
                 const d = s.val() || {};
                 document.getElementById('header-status').innerText = d.status || "Offline";
@@ -187,6 +205,7 @@
                 if(d.pic) document.getElementById('header-pic').style.backgroundImage = `url(${d.pic})`;
             });
 
+            // CHAT LOGIC
             db.ref('chats').on('value', s => {
                 const box = document.getElementById('chat-box');
                 const data = s.val();
@@ -223,7 +242,6 @@
             });
         }
 
-        // --- Sisa Fungsi Tetap Sama ---
         function confirmDelete(key) { if(confirm("Hapus pesan ini?")) db.ref(`chats/${key}`).remove(); }
         function handleAction() {
             const inp = document.getElementById('msg-input');
@@ -288,8 +306,18 @@
         }
         function closePanels() { document.getElementById('emoji-panel').style.display = 'none'; document.getElementById('menu-dropdown').style.display = 'none'; }
         function toggleMenu(e) { e.stopPropagation(); const m = document.getElementById('menu-dropdown'); m.style.display = m.style.display === 'block' ? 'none' : 'block'; }
-        function zoomPic() { document.getElementById('header-pic').classList.toggle('zoom'); document.getElementById('overlay').style.display = 'block'; }
-        function closeZoom() { document.getElementById('header-pic').classList.remove('zoom'); document.getElementById('overlay').style.display = 'none'; }
+        
+        // PERBAIKAN: Fungsi zoomPic agar foto di tengah
+        function zoomPic() { 
+            document.getElementById('header-pic').classList.add('zoom'); 
+            document.getElementById('overlay').style.display = 'block'; 
+        }
+        
+        function closeZoom() { 
+            document.getElementById('header-pic').classList.remove('zoom'); 
+            document.getElementById('overlay').style.display = 'none'; 
+        }
+        
         function updateProfilePic(el) { if(el.files[0]) { const r = new FileReader(); r.onload = e => db.ref(`profiles/${currentUser}`).update({ pic: e.target.result }); r.readAsDataURL(el.files[0]); } }
         function initEmoji() {
             const emojis = ["😊","😂","🤣","❤️","😍","😘","🥰","😇","😋","😛","😜","🤪","🤨","🧐","🤔","🤫","🫠","🫣","🫢","🫡","🤩","🥳","🥵","🥶","🥺","😭","😤","😠","😡","🤬","🤯","😳","🤗","😰","😱","🥱","😴","🤤","🤢","🤮","😎","🤓","🤨","😒","🙄","😬","🤥","😶","😐","😑","🤐","🥴","😵","🙌","👏","👋","👍","👎","👊","🙏","🤝","🔥","✨","💯"];
