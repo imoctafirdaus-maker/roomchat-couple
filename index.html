@@ -10,7 +10,7 @@
     <link rel="apple-touch-icon" href="logo.jpg">
     <link rel="manifest" href="manifest.json">
     
-    <title>WhatsApp Couple Pro (Custom Stickers)</title>
+    <title>WhatsApp Couple Pro</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -21,6 +21,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         html, body { height: 100%; width: 100%; overflow: hidden; position: fixed; }
         
+        /* Login Screen */
         #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .login-logo { width: 80px; height: 80px; border-radius: 20px; background: url('logo.jpg') center/cover; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .login-title { font-size: 20px; color: #54656f; margin-bottom: 20px; font-weight: bold; }
@@ -29,6 +30,7 @@
         .user-item:active { background: #f0f0f0; transform: scale(0.98); }
         .user-avatar { width: 45px; height: 45px; border-radius: 50%; background: #ccc center/cover; }
 
+        /* App Interface */
         #app-interface { display: none; height: 100%; flex-direction: column; background-color: var(--bg-chat); background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); }
 
         .header { background: var(--wa-green); color: white; padding: 10px 16px; display: flex; align-items: center; gap: 12px; height: 60px; flex-shrink: 0; z-index: 100; position: relative; }
@@ -46,7 +48,6 @@
         .msg-meta { position: absolute; right: 8px; bottom: 4px; display: flex; align-items: center; gap: 4px; }
         .time { font-size: 10px; color: #888; }
         
-        /* CSS STIKER YANG DIPERBAIKI */
         .sticker-msg { background: transparent !important; box-shadow: none !important; padding: 0 !important; }
         .sticker-img { width: 130px; height: 130px; object-fit: contain; }
 
@@ -54,37 +55,9 @@
         .panel-tabs { display: flex; background: #f0f0f0; border-bottom: 1px solid #ddd; }
         .tab-btn { flex: 1; padding: 10px; border: none; background: none; cursor: pointer; color: #54656f; }
         .tab-btn.active { border-bottom: 3px solid var(--wa-dark); color: var(--wa-dark); }
-        
-        /* Panel Grid Stiker */
-        .panel-content { 
-            flex: 1; 
-            overflow-y: auto; 
-            padding: 10px; 
-            display: grid; 
-            grid-template-columns: repeat(4, 1fr); 
-            gap: 10px; 
-            align-content: start; 
-        }
-
-        .sticker-item { 
-            width: 100%; 
-            aspect-ratio: 1/1; 
-            object-fit: contain; 
-            cursor: pointer; 
-        }
-
-        .add-sticker-btn {
-            width: 100%;
-            aspect-ratio: 1/1;
-            border: 2px dashed #ccc;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 10px;
-            color: #888;
-            cursor: pointer;
-        }
-
+        .panel-content { flex: 1; overflow-y: auto; padding: 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center; align-content: start; }
+        .sticker-item { width: 100%; aspect-ratio: 1/1; object-fit: contain; cursor: pointer; }
+        .add-sticker-btn { width: 100%; aspect-ratio: 1/1; border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center; border-radius: 10px; color: #888; cursor: pointer; }
         .emoji-grid { font-size: 24px; padding: 10px; display: grid; grid-template-columns: repeat(7, 1fr); gap: 15px; }
 
         .input-area { background: #f0f0f0; padding: 8px; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
@@ -101,7 +74,8 @@
         
         #file-input, #camera-input, #change-profile-input, #custom-sticker-input { display: none; }
         audio { height: 35px; width: 200px; }
-        img.clickable-img { width: 100%; border-radius: 5px; cursor: pointer; margin-bottom: 5px; }
+        img.clickable-img { width: 100%; border-radius: 10px; cursor: pointer; margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        video { border-radius: 10px; max-width: 100%; }
     </style>
 </head>
 <body>
@@ -127,7 +101,7 @@
         <div id="settings-modal">
             <div class="modal-content">
                 <h3 id="settings-title">Pengaturan Profil</h3>
-                <label style="display: block; margin-bottom: 15px; cursor: pointer; color: #008069; font-weight: bold;">
+                <label style="display: block; margin-top: 20px; margin-bottom: 15px; cursor: pointer; color: #008069; font-weight: bold;">
                     📸 Ganti Foto Saya
                     <input type="file" id="change-profile-input" accept="image/*" onchange="updateMyProfilePic(this)">
                 </label>
@@ -223,6 +197,7 @@
         let currentPartnerPic = "";
         let isFirstLoad = true;
         let partnerOnline = false;
+        let lastMessageTimestamp = 0; 
 
         const userPins = { 'Okta': '14102000', 'Novi': '14112001' };
 
@@ -237,7 +212,13 @@
             if (enteredPin === userPins[name]) {
                 currentUser = name;
                 localStorage.setItem('logged_user', name);
-                notifSound.play().then(() => { notifSound.pause(); notifSound.currentTime = 0; }).catch(() => {});
+                
+                // Unlock audio saat login
+                notifSound.play().then(() => {
+                    notifSound.pause();
+                    notifSound.currentTime = 0;
+                }).catch(e => console.log("Audio unlock failed"));
+
                 enterApp();
             } else { alert("PIN Salah!"); }
         }
@@ -303,12 +284,12 @@
                 }
 
                 if(profiles['Okta']?.pic) {
-                    const oktaLoginPic = document.getElementById('login-pic-okta');
-                    if(oktaLoginPic) { oktaLoginPic.style.backgroundImage = `url('${profiles['Okta'].pic}')`; oktaLoginPic.innerText = ""; }
+                    const oktaPic = document.getElementById('login-pic-okta');
+                    if(oktaPic) { oktaPic.style.backgroundImage = `url('${profiles['Okta'].pic}')`; oktaPic.innerText = ""; }
                 }
                 if(profiles['Novi']?.pic) {
-                    const noviLoginPic = document.getElementById('login-pic-novi');
-                    if(noviLoginPic) { noviLoginPic.style.backgroundImage = `url('${profiles['Novi'].pic}')`; noviLoginPic.innerText = ""; }
+                    const noviPic = document.getElementById('login-pic-novi');
+                    if(noviPic) { noviPic.style.backgroundImage = `url('${profiles['Novi'].pic}')`; noviPic.innerText = ""; }
                 }
             });
         }
@@ -316,18 +297,14 @@
         function updateMyProfilePic(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
-                reader.onload = (e) => {
-                    db.ref(`profiles/${currentUser}`).update({ pic: e.target.result });
-                };
+                reader.onload = (e) => { db.ref(`profiles/${currentUser}`).update({ pic: e.target.result }); };
                 reader.readAsDataURL(input.files[0]);
             }
         }
 
         function saveMyProfileSettings() {
             const newName = document.getElementById('new-name-input').value;
-            if (newName.trim() !== "") {
-                db.ref(`profiles/${currentUser}`).update({ name: newName });
-            }
+            if (newName.trim() !== "") db.ref(`profiles/${currentUser}`).update({ name: newName });
             document.getElementById('settings-modal').style.display = 'none';
         }
 
@@ -336,7 +313,7 @@
                 const chats = snap.val();
                 if (chats) {
                     Object.keys(chats).forEach(key => {
-                        if (chats[key].sender === currentUser && chats[key].status === 'sent') {
+                        if (chats[key].sender !== currentUser && chats[key].status === 'sent') {
                             db.ref(`chats/${key}`).update({ status: 'read' });
                         }
                     });
@@ -345,25 +322,24 @@
         }
 
         function listenChat() {
-            db.ref('chats').on('value', (snapshot) => {
+            db.ref('chats').orderByChild('timestamp').on('value', (snapshot) => {
                 const data = snapshot.val();
                 const messages = data ? Object.entries(data) : [];
                 
-                if (!isFirstLoad && messages.length > 0) {
-                    const lastMsg = messages[messages.length - 1][1];
-                    if (lastMsg.sender !== currentUser) {
-                        notifSound.play().catch(() => {});
-                        if (messages[messages.length - 1][1].status === 'sent') {
-                            db.ref(`chats/${messages[messages.length - 1][0]}`).update({ status: 'read' });
-                        }
-                    }
-                }
-
                 chatBox.innerHTML = "";
                 messages.forEach(([id, msg]) => {
                     renderMsg(msg.content, msg.sender === currentUser ? 'sent' : 'received', msg.time, msg.isSticker, msg.status);
+                    
+                    if (!isFirstLoad && msg.sender !== currentUser && msg.timestamp > lastMessageTimestamp) {
+                        notifSound.currentTime = 0;
+                        notifSound.play().catch(e => console.log("Sound error"));
+                    }
+
+                    if (msg.timestamp > lastMessageTimestamp) lastMessageTimestamp = msg.timestamp;
                 });
+
                 isFirstLoad = false;
+                chatBox.scrollTop = chatBox.scrollHeight;
             });
         }
 
@@ -388,7 +364,6 @@
                 `${content}<div class="msg-meta"><span class="time">${time}</span> ${statusIcon}</div>`;
             
             chatBox.appendChild(div);
-            chatBox.scrollTop = chatBox.scrollHeight;
             lucide.createIcons();
         }
 
@@ -398,28 +373,24 @@
             if(!isOpen) switchTab('emoji', document.querySelector('.tab-btn'));
         }
 
-        // FUNGSI SWITCH TAB YANG DIPERBAIKI (TETAP MENJAGA FUNGSI FIREBASE STICKER)
         function switchTab(type, btn) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             panelContent.innerHTML = "";
-            
             if(type === 'emoji') {
-                panelContent.style.display = "block"; // Reset ke block untuk emoji wrapper
-                const emojiWrapper = document.createElement('div');
-                emojiWrapper.className = 'emoji-grid';
-                const emojis = ["😀","😃","😄","😁","😆","😅","😂","🤣","😊","😇","🙂","🙃","😉","😌","😍","🥰","😘","😗","😙","😚","😋","😛","😝","😜","🤪","🤨","🧐","🤓","😎","🤩","🥳","😏","😒","😞","😔","😟","😕","🙁","☹️","😣","😖","😫","😩","🥺","😢","😭","😤","😠","😡","🤬","🤯","😳","🥵","🥶","😱","😨","😰","😥","😓","🤗","🤔","🤭","🤫","🤥","😶","😐","😑","😬","🙄","😯","😦","😧","😮","😲","🥱","😴","🤤","😪","😵","🤐","🥴","🤢","🤮","🤧","😷","🤒","🤕","🤑","🤠","😈","👿","👹","👺","🤡","💩","👻","💀","☠️","👽","👾","🤖","🎃","😺","😸","😹","😻","😼","😽","🙀","😿","😾","👋","🤚","🖐","✋","🖖","👌","🤏","✌️","🤞","🤟","🤘","🤙","👈","👉","👆","🖕","👇","☝️","👍","👎","✊","👊","🤛","🤜","👏","🙌","👐","🤲","🤝","🙏","✍️","💅","🤳","💪","🦾","LEG","FOOT","FOOT","EAR","EAR","NOSE","BRAIN","TOOTH","BONE","EYE","EYE","TONGUE","MOUTH","KISS","BLOOD","❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟","✨","🔥","⚡️","☀️","🌟","☁️"];
+                panelContent.style.gridTemplateColumns = "1fr";
+                const grid = document.createElement('div');
+                grid.className = 'emoji-grid';
+                const emojis = ["😀","😃","😄","😁","😆","😅","😂","🤣","😊","😇","🙂","🙃","😉","😌","😍","🥰","😘","😗","😙","😚","😋","😛","😝","😜","🤪","🤨","🧐","🤓","😎","🤩","🥳","😏","😒","😞","😔","😟","😕","🙁","☹️","😣","😖","😫","😩","🥺","😢","😭","😤","😠","😡","🤬","🤯","😳","🥵","🥶","😱","😨","😰","😥","😓","🤗","🤔","🤭","🤫","🤥","😶","😐","😑","😬","🙄","😯","😦","😧","😮","😲","🥱","😴","🤤","😪","😵","🤐","🥴","🤢","🤮","🤧","😷","🤒","🤕","🤑","🤠","😈","👿","👹","👺","🤡","💩","👻","💀","☠️","👽","👾","🤖","🎃","😺","😸","😹","😻","😼","😽","🙀","😿","😾","❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟","✨","🔥","⚡️","☀️","🌟","☁️"];
                 emojis.forEach(e => {
                     const span = document.createElement('span');
                     span.innerText = e; span.style.cursor = 'pointer';
                     span.onclick = () => { input.value += e; input.dispatchEvent(new Event('input')); };
-                    emojiWrapper.appendChild(span);
+                    grid.appendChild(span);
                 });
-                panelContent.appendChild(emojiWrapper);
+                panelContent.appendChild(grid);
             } else {
-                panelContent.style.display = "grid"; // Gunakan grid untuk stiker
                 panelContent.style.gridTemplateColumns = "repeat(4, 1fr)";
-                
                 const addBtn = document.createElement('div');
                 addBtn.className = 'add-sticker-btn';
                 addBtn.innerHTML = '<i data-lucide="plus"></i>';
@@ -431,8 +402,7 @@
                     const all = [...defaultStickers, ...Object.values(stickers)];
                     all.reverse().forEach(src => {
                         const img = document.createElement('img');
-                        img.src = src; 
-                        img.className = 'sticker-item'; // Class CSS baru agar ukurannya rapi
+                        img.src = src; img.className = 'sticker-item';
                         img.onclick = () => { addMsg(src, 'sent', true); emojiPanel.style.display = 'none'; };
                         panelContent.appendChild(img);
                     });
@@ -440,20 +410,6 @@
                 });
             }
             lucide.createIcons();
-        }
-
-        // FUNGSI UPLOAD STICKER (TETAP ADA)
-        function uploadCustomSticker(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const newRef = db.ref('custom_stickers').push();
-                    newRef.set(e.target.result);
-                    // Langsung beralih ke tab stiker untuk melihat hasilnya
-                    switchTab('sticker', document.querySelectorAll('.tab-btn')[1]);
-                };
-                reader.readAsDataURL(input.files[0]);
-            }
         }
 
         input.addEventListener('input', () => { 
@@ -477,17 +433,31 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    const content = file.type.startsWith('image') ? `<img src="${e.target.result}" class="clickable-img" onclick="showFullImg('${e.target.result}')">` : `<video src="${e.target.result}" controls style="width:100%;"></video>`;
+                    const content = file.type.startsWith('image') ? 
+                        `<img src="${e.target.result}" class="clickable-img" onclick="showFullImg('${e.target.result}')">` : 
+                        `<video src="${e.target.result}" controls></video>`;
                     addMsg(content, 'sent');
                 };
                 reader.readAsDataURL(file);
             }
         }
 
+        function uploadCustomSticker(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    db.ref('custom_stickers').push(e.target.result);
+                    switchTab('sticker', document.querySelectorAll('.tab-btn')[1]);
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
         function showFullImg(src) { if(!src) return; document.getElementById('preview-img').src = src; document.getElementById('preview-overlay').style.display = 'flex'; }
-        function downloadImage() { const a = document.createElement('a'); a.href = document.getElementById('preview-img').src; a.download = `WA_${Date.now()}.png`; a.click(); }
+        function downloadImage() { const a = document.createElement('a'); a.href = document.getElementById('preview-img').src; a.download = `WA_Couple_${Date.now()}.png`; a.click(); }
         function clearHistory() { if(confirm("Hapus semua chat?")) db.ref('chats').remove(); }
 
+        /* Voice Recording Logic */
         let mediaRecorder, audioChunks = [];
         async function startRecording() {
             if(input.value.trim() !== "") return;
@@ -515,13 +485,19 @@
 
         window.onload = () => {
             const saved = localStorage.getItem('logged_user');
-            if (saved) { currentUser = saved; enterApp(); }
+            if (saved) { 
+                currentUser = saved; 
+                document.body.addEventListener('click', () => {
+                    notifSound.play().then(() => { notifSound.pause(); notifSound.currentTime = 0; }).catch(() => {});
+                }, { once: true });
+                enterApp(); 
+            }
         };
 
-        window.onclick = function(event) {
-            if (!event.target.matches('[data-lucide="more-vertical"]')) {
-                const dropdown = document.getElementById('burger-dropdown');
-                if (dropdown) dropdown.style.display = 'none';
+        window.onclick = (e) => {
+            if (!e.target.matches('[data-lucide="more-vertical"]')) {
+                const drop = document.getElementById('burger-dropdown');
+                if (drop) drop.style.display = 'none';
             }
         }
     </script>
