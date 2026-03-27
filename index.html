@@ -3,16 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
     <meta name="theme-color" content="#075e54">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="logo.jpg">
-    <link rel="manifest" href="manifest.json">
-    
     <title>WhatsApp Couple Pro</title>
     <script src="https://unpkg.com/lucide@latest"></script>
-    
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     
@@ -20,154 +13,71 @@
         :root { --wa-green: #075e54; --wa-light-green: #dcf8c6; --wa-blue: #34b7f1; --bg-chat: #e5ddd5; --wa-dark: #128c7e; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         html, body { height: 100%; width: 100%; overflow: hidden; position: fixed; }
-        
-        /* Login Screen */
         #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         .login-logo { width: 80px; height: 80px; border-radius: 20px; background: url('logo.jpg') center/cover; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .login-title { font-size: 20px; color: #54656f; margin-bottom: 20px; font-weight: bold; }
         .user-list { width: 100%; max-width: 300px; display: flex; flex-direction: column; gap: 15px; }
-        .user-item { padding: 15px; border: 1px solid #ddd; border-radius: 10px; display: flex; align-items: center; gap: 15px; cursor: pointer; transition: 0.2s; }
-        .user-item:active { background: #f0f0f0; transform: scale(0.98); }
-        .user-avatar { width: 45px; height: 45px; border-radius: 50%; background: #ccc center/cover; }
-
-        /* App Interface */
-        #app-interface { display: none; height: 100%; flex-direction: column; background-color: var(--bg-chat); background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); }
-
-        .header { background: var(--wa-green); color: white; padding: 10px 16px; display: flex; align-items: center; gap: 12px; height: 60px; flex-shrink: 0; z-index: 100; position: relative; }
-        .profile-pic { width: 40px; height: 40px; border-radius: 50%; background: #ccc center/cover; position: relative; flex-shrink: 0; cursor: pointer; }
+        .user-item { padding: 15px; border: 1px solid #ddd; border-radius: 10px; display: flex; align-items: center; gap: 15px; cursor: pointer; }
+        #app-interface { display: none; height: 100%; flex-direction: column; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); }
+        .header { background: var(--wa-green); color: white; padding: 10px 16px; display: flex; align-items: center; gap: 12px; height: 60px; }
+        .profile-pic { width: 40px; height: 40px; border-radius: 50%; background: #ccc center/cover; position: relative; }
         .online-dot { width: 11px; height: 11px; background: #4df03d; border: 2px solid var(--wa-green); border-radius: 50%; position: absolute; bottom: 0; right: 0; }
-
-        .dropdown-menu { display: none; position: absolute; top: 50px; right: 10px; background: white; min-width: 170px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 4px; z-index: 1000; padding: 8px 0; }
-        .dropdown-item { padding: 12px 16px; color: #333; font-size: 15px; cursor: pointer; }
-        .dropdown-item:active { background: #f5f5f5; }
-
         .chat-container { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; }
-        .message { position: relative; max-width: 80%; padding: 8px 12px 22px 12px; margin-bottom: 12px; font-size: 15px; border-radius: 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); word-wrap: break-word; }
+        .message { position: relative; max-width: 80%; padding: 8px 12px 22px 12px; margin-bottom: 12px; font-size: 15px; border-radius: 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
         .received { background: white; align-self: flex-start; border-top-left-radius: 0; }
         .sent { background: var(--wa-light-green); align-self: flex-end; border-top-right-radius: 0; }
         .msg-meta { position: absolute; right: 8px; bottom: 4px; display: flex; align-items: center; gap: 4px; }
         .time { font-size: 10px; color: #888; }
-        
-        .sticker-msg { background: transparent !important; box-shadow: none !important; padding: 0 !important; }
-        .sticker-img { width: 130px; height: 130px; object-fit: contain; }
-
-        #emoji-panel { display: none; background: white; height: 280px; flex-direction: column; border-top: 1px solid #ddd; z-index: 1000; }
-        .panel-tabs { display: flex; background: #f0f0f0; border-bottom: 1px solid #ddd; }
-        .tab-btn { flex: 1; padding: 10px; border: none; background: none; cursor: pointer; color: #54656f; }
-        .tab-btn.active { border-bottom: 3px solid var(--wa-dark); color: var(--wa-dark); }
-        .panel-content { flex: 1; overflow-y: auto; padding: 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center; align-content: start; }
-        .sticker-item { width: 100%; aspect-ratio: 1/1; object-fit: contain; cursor: pointer; }
-        .add-sticker-btn { width: 100%; aspect-ratio: 1/1; border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center; border-radius: 10px; color: #888; cursor: pointer; }
-        .emoji-grid { font-size: 24px; padding: 10px; display: grid; grid-template-columns: repeat(7, 1fr); gap: 15px; }
-
-        .input-area { background: #f0f0f0; padding: 8px; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .input-area { background: #f0f0f0; padding: 8px; display: flex; align-items: center; gap: 8px; }
         .input-box { background: white; flex: 1; border-radius: 25px; padding: 5px 12px; display: flex; align-items: center; gap: 8px; }
         input { border: none; flex: 1; padding: 10px 0; outline: none; font-size: 16px; }
-        .icon-btn { color: #54656f; cursor: pointer; border: none; background: none; }
-        .circle-btn { background: #008069; color: white; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; flex-shrink: 0; transition: 0.2s; }
-        
-        .recording { background: #ff4b4b !important; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
-
-        #settings-modal, #preview-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 5001; justify-content: center; align-items: center; }
-        .modal-content { background: white; width: 85%; padding: 20px; border-radius: 15px; }
-        
-        #file-input, #camera-input, #change-profile-input, #custom-sticker-input { display: none; }
-        audio { height: 35px; width: 200px; }
-        img.clickable-img { width: 100%; border-radius: 10px; cursor: pointer; margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        video { border-radius: 10px; max-width: 100%; }
+        .circle-btn { background: #008069; color: white; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; }
+        video { border-radius: 10px; max-width: 100%; background: black; }
+        audio.vn { height: 35px; width: 200px; }
     </style>
 </head>
-<body>
+<body onclick="enableAudioOnFirstClick()">
 
-    <audio id="notif-sound" src="https://raw.githubusercontent.com/Aris-Agustiyan/whatsapp-clone/master/src/assets/sounds/whatsapp_notification.mp3" preload="auto"></audio>
+    <audio id="notif-sound" preload="auto">
+        <source src="https://raw.githubusercontent.com/Aris-Agustiyan/whatsapp-clone/master/src/assets/sounds/whatsapp_notification.mp3" type="audio/mpeg">
+    </audio>
 
     <div id="login-screen">
         <div class="login-logo"></div>
-        <div class="login-title">Siapa Anda?</div>
+        <h3 style="margin-bottom:20px; color:#54656f;">Siapa Anda?</h3>
         <div class="user-list">
             <div class="user-item" onclick="loginAs('Okta')">
-                <div class="user-avatar" id="login-pic-okta" style="background-color: #075e54; display: flex; align-items: center; justify-content: center; color: white; background-size: cover; background-position: center;">O</div>
-                <div style="font-weight: bold; font-size: 18px;">Okta</div>
+                <div class="user-avatar" style="background-color:#075e54; color:white; display:flex; align-items:center; justify-content:center; width:45px; height:45px; border-radius:50%;">O</div>
+                <b>Okta</b>
             </div>
             <div class="user-item" onclick="loginAs('Novi')">
-                <div class="user-avatar" id="login-pic-novi" style="background-color: #e11d48; display: flex; align-items: center; justify-content: center; color: white; background-size: cover; background-position: center;">N</div>
-                <div style="font-weight: bold; font-size: 18px;">Novi</div>
+                <div class="user-avatar" style="background-color:#e11d48; color:white; display:flex; align-items:center; justify-content:center; width:45px; height:45px; border-radius:50%;">N</div>
+                <b>Novi</b>
             </div>
         </div>
     </div>
 
     <div id="app-interface">
-        <div id="settings-modal">
-            <div class="modal-content">
-                <h3 id="settings-title">Pengaturan Profil</h3>
-                <label style="display: block; margin-top: 20px; margin-bottom: 15px; cursor: pointer; color: #008069; font-weight: bold;">
-                    📸 Ganti Foto Saya
-                    <input type="file" id="change-profile-input" accept="image/*" onchange="updateMyProfilePic(this)">
-                </label>
-                <input type="text" id="new-name-input" placeholder="Ganti nama saya..." style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ddd; border-radius:5px;">
-                <button onclick="saveMyProfileSettings()" style="background:#008069; color:white; border:none; padding:10px; border-radius:5px; width:100%; font-weight:bold;">Simpan</button>
-                <button onclick="document.getElementById('settings-modal').style.display='none'" style="margin-top:10px; background:#ddd; border:none; padding:10px; border-radius:5px; width:100%;">Batal</button>
-            </div>
-        </div>
-
-        <div id="preview-overlay">
-            <div style="position: relative; width: 90%; height: 80%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                <img id="preview-img" style="max-width:100%; max-height:100%; border-radius:10px; object-fit: contain; background: black;">
-                <div style="margin-top: 20px; display: flex; gap: 20px;">
-                    <button onclick="downloadImage()" style="background: white; border: none; padding: 10px; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
-                        <i data-lucide="download" color="#075e54"></i>
-                    </button>
-                    <button onclick="document.getElementById('preview-overlay').style.display='none'" style="background: #ff4b4b; border: none; padding: 10px; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
-                        <i data-lucide="x" color="white"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-
         <div class="header">
-            <div class="profile-pic" id="header-pic" onclick="showFullImg(currentPartnerPic)"><div class="online-dot"></div></div>
-            <div class="user-info" style="flex: 1; cursor: pointer;" onclick="document.getElementById('settings-modal').style.display='flex'">
+            <div class="profile-pic" id="header-pic"><div class="online-dot"></div></div>
+            <div style="flex:1">
                 <h4 id="header-name">Partner</h4>
-                <span id="header-status" style="font-size: 12px; opacity: 0.9;">Offline</span>
+                <span id="header-status" style="font-size:12px">Offline</span>
             </div>
-            <div style="display: flex; gap: 15px; align-items: center;">
-                <i data-lucide="rotate-cw" size="20" onclick="location.reload()" style="cursor: pointer;"></i>
-                <i data-lucide="more-vertical" size="22" onclick="toggleMenu()" style="cursor: pointer;"></i>
-                <div id="burger-dropdown" class="dropdown-menu">
-                    <div class="dropdown-item" onclick="document.getElementById('settings-modal').style.display='flex'; toggleMenu()">Setelan</div>
-                    <div class="dropdown-item" onclick="clearHistory(); toggleMenu()">Hapus Chat</div>
-                    <div class="dropdown-item" onclick="logout(); toggleMenu()">Keluar</div>
-                </div>
-            </div>
+            <i data-lucide="more-vertical" style="cursor:pointer"></i>
         </div>
 
         <div class="chat-container" id="chat-box"></div>
 
-        <div id="emoji-panel">
-            <div class="panel-tabs">
-                <button class="tab-btn active" onclick="switchTab('emoji', this)"><i data-lucide="smile" size="18"></i></button>
-                <button class="tab-btn" onclick="switchTab('sticker', this)"><i data-lucide="box" size="18"></i></button>
-            </div>
-            <div id="panel-content" class="panel-content"></div>
-        </div>
-
         <div class="input-area">
             <div class="input-box">
-                <button class="icon-btn" onclick="toggleEmoji()"><i data-lucide="smile"></i></button>
+                <i data-lucide="smile" style="color:#54656f"></i>
                 <input type="text" id="msg-input" placeholder="Ketik pesan..." autocomplete="off">
-                <label for="file-input" class="icon-btn"><i data-lucide="paperclip"></i></label>
-                <input type="file" id="file-input" accept="image/*,video/*" onchange="handleFile(this)">
-                <label for="camera-input" class="icon-btn"><i data-lucide="camera"></i></label>
-                <input type="file" id="camera-input" accept="image/*" capture="environment" onchange="handleFile(this)">
+                <label for="file-input"><i data-lucide="paperclip" style="color:#54656f; cursor:pointer"></i></label>
+                <input type="file" id="file-input" hidden accept="image/*,video/*" onchange="handleFile(this)">
             </div>
-            <button class="circle-btn" id="main-btn">
-                <i data-lucide="mic" id="btn-icon"></i>
-            </button>
+            <button class="circle-btn" id="main-btn"><i data-lucide="send-horizontal"></i></button>
         </div>
     </div>
-
-    <input type="file" id="custom-sticker-input" accept="image/*" onchange="uploadCustomSticker(this)">
 
     <script>
         const firebaseConfig = {
@@ -175,331 +85,123 @@
           authDomain: "couple-chat-okta-dan-novi.firebaseapp.com",
           databaseURL: "https://couple-chat-okta-dan-novi-default-rtdb.asia-southeast1.firebasedatabase.app",
           projectId: "couple-chat-okta-dan-novi",
-          storageBucket: "couple-chat-okta-dan-novi.firebasestorage.app",
-          messagingSenderId: "565389113605",
-          appId: "1:565389113605:web:29f202cdae9de407329f6c",
-          measurementId: "G-1T133H7LJ3"
         };
-
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        lucide.createIcons();
-        const chatBox = document.getElementById('chat-box');
-        const input = document.getElementById('msg-input');
-        const btnIcon = document.getElementById('btn-icon');
-        const mainBtn = document.getElementById('main-btn');
-        const emojiPanel = document.getElementById('emoji-panel');
-        const panelContent = document.getElementById('panel-content');
-        const notifSound = document.getElementById('notif-sound');
-        
         let currentUser = "";
-        let currentPartnerPic = "";
         let isFirstLoad = true;
-        let partnerOnline = false;
-        let lastMessageTimestamp = 0; 
+        const audio = document.getElementById('notif-sound');
 
-        const userPins = { 'Okta': '14102000', 'Novi': '14112001' };
-
-        const defaultStickers = [
-            "https://cdn-icons-png.flaticon.com/512/3884/3884851.png",
-            "https://cdn-icons-png.flaticon.com/512/3884/3884871.png",
-            "https://cdn-icons-png.flaticon.com/512/3884/3884864.png"
-        ];
+        function enableAudioOnFirstClick() {
+            audio.play().then(() => { audio.pause(); audio.currentTime = 0; }).catch(() => {});
+            document.body.removeAttribute('onclick');
+        }
 
         function loginAs(name) {
-            const enteredPin = prompt(`Masukkan PIN untuk ${name}:`);
-            if (enteredPin === userPins[name]) {
+            const pin = prompt(`PIN ${name}:`);
+            const pins = { 'Okta': '14102000', 'Novi': '14112001' };
+            if (pin === pins[name]) {
                 currentUser = name;
                 localStorage.setItem('logged_user', name);
-                
-                // Unlock audio saat login
-                notifSound.play().then(() => {
-                    notifSound.pause();
-                    notifSound.currentTime = 0;
-                }).catch(e => console.log("Audio unlock failed"));
-
-                enterApp();
-            } else { alert("PIN Salah!"); }
+                enableAudioOnFirstClick();
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('app-interface').style.display = 'flex';
+                startApp();
+            } else { alert("Salah!"); }
         }
 
-        function enterApp() {
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('app-interface').style.display = 'flex';
-            document.getElementById('settings-title').innerText = `Profil ${currentUser}`;
-            
-            const statusRef = db.ref(`profiles/${currentUser}`);
-            statusRef.update({ status: "Online", lastSeen: "" });
-            statusRef.onDisconnect().update({
-                status: "Offline",
-                lastSeen: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+        function startApp() {
+            lucide.createIcons();
+            db.ref(`profiles/${currentUser}`).update({ status: "Online" });
+            db.ref(`profiles/${currentUser}`).onDisconnect().update({ status: "Offline", lastSeen: new Date().toLocaleTimeString() });
+
+            const partner = currentUser === "Okta" ? "Novi" : "Okta";
+            db.ref(`profiles/${partner}`).on('value', s => {
+                const d = s.val() || {};
+                document.getElementById('header-name').innerText = d.name || partner;
+                document.getElementById('header-status').innerText = d.status === "Online" ? "Online" : "Offline";
             });
 
-            listenProfile();
-            listenChat();
-        }
-
-        function toggleMenu() {
-            const menu = document.getElementById('burger-dropdown');
-            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
-        }
-
-        function logout() {
-            if(confirm("Apakah kamu ingin keluar?")) {
-                db.ref(`profiles/${currentUser}`).update({
-                    status: "Offline",
-                    lastSeen: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-                });
-                localStorage.removeItem('logged_user');
-                location.reload();
-            }
-        }
-
-        function listenProfile() {
-            db.ref('profiles').on('value', (snapshot) => {
-                const profiles = snapshot.val() || {};
-                const partner = (currentUser === "Okta") ? "Novi" : "Okta";
-                const partnerData = profiles[partner] || {};
-                
-                partnerOnline = (partnerData.status === "Online");
-                document.getElementById('header-name').innerText = partnerData.name || (partner === "Novi" ? "Novi ❤️" : "Okta Firdaus");
-                
-                const statusEl = document.getElementById('header-status');
-                const dotEl = document.querySelector('.online-dot');
-                const headerPic = document.getElementById('header-pic');
-
-                if (partnerOnline) {
-                    statusEl.innerText = "Online";
-                    dotEl.style.background = "#4df03d";
-                    markMessagesAsRead();
-                } else {
-                    statusEl.innerText = partnerData.lastSeen ? `terakhir dilihat pukul ${partnerData.lastSeen}` : "Offline";
-                    dotEl.style.background = "#888";
-                }
-
-                if(partnerData.pic) {
-                    currentPartnerPic = partnerData.pic;
-                    headerPic.style.backgroundImage = `url('${partnerData.pic}')`;
-                    headerPic.style.backgroundSize = 'cover';
-                }
-
-                if(profiles['Okta']?.pic) {
-                    const oktaPic = document.getElementById('login-pic-okta');
-                    if(oktaPic) { oktaPic.style.backgroundImage = `url('${profiles['Okta'].pic}')`; oktaPic.innerText = ""; }
-                }
-                if(profiles['Novi']?.pic) {
-                    const noviPic = document.getElementById('login-pic-novi');
-                    if(noviPic) { noviPic.style.backgroundImage = `url('${profiles['Novi'].pic}')`; noviPic.innerText = ""; }
-                }
-            });
-        }
-
-        function updateMyProfilePic(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = (e) => { db.ref(`profiles/${currentUser}`).update({ pic: e.target.result }); };
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-
-        function saveMyProfileSettings() {
-            const newName = document.getElementById('new-name-input').value;
-            if (newName.trim() !== "") db.ref(`profiles/${currentUser}`).update({ name: newName });
-            document.getElementById('settings-modal').style.display = 'none';
-        }
-
-        function markMessagesAsRead() {
-            db.ref('chats').once('value', (snap) => {
-                const chats = snap.val();
-                if (chats) {
-                    Object.keys(chats).forEach(key => {
-                        if (chats[key].sender !== currentUser && chats[key].status === 'sent') {
-                            db.ref(`chats/${key}`).update({ status: 'read' });
-                        }
-                    });
-                }
-            });
-        }
-
-        function listenChat() {
-            db.ref('chats').orderByChild('timestamp').on('value', (snapshot) => {
-                const data = snapshot.val();
-                const messages = data ? Object.entries(data) : [];
-                
-                chatBox.innerHTML = "";
-                messages.forEach(([id, msg]) => {
-                    renderMsg(msg.content, msg.sender === currentUser ? 'sent' : 'received', msg.time, msg.isSticker, msg.status);
-                    
-                    if (!isFirstLoad && msg.sender !== currentUser && msg.timestamp > lastMessageTimestamp) {
-                        notifSound.currentTime = 0;
-                        notifSound.play().catch(e => console.log("Sound error"));
+            // Perbaikan Logika Suara
+            db.ref('chats').limitToLast(1).on('child_added', s => {
+                const msg = s.val();
+                if (!isFirstLoad) {
+                    renderMsg(msg);
+                    if (msg.sender !== currentUser) {
+                        audio.currentTime = 0;
+                        audio.play().catch(e => console.log("Audio block"));
                     }
-
-                    if (msg.timestamp > lastMessageTimestamp) lastMessageTimestamp = msg.timestamp;
-                });
-
-                isFirstLoad = false;
-                chatBox.scrollTop = chatBox.scrollHeight;
+                }
             });
-        }
-
-        function addMsg(content, type, isSticker = false) {
-            const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            const initialStatus = partnerOnline ? 'read' : 'sent';
-            db.ref('chats').push({ 
-                sender: currentUser, content, time, isSticker, status: initialStatus, timestamp: Date.now() 
-            });
-        }
-
-        function renderMsg(content, type, time, isSticker = false, status = 'sent') {
-            const div = document.createElement('div');
-            div.className = `message ${type} ${isSticker ? 'sticker-msg' : ''}`;
-            let statusIcon = "";
-            if (type === 'sent') {
-                statusIcon = status === 'read' ? '<i data-lucide="check-check" size="14" color="#34b7f1"></i>' : '<i data-lucide="check" size="14" color="#888"></i>';
-            }
-
-            div.innerHTML = isSticker ? 
-                `<img src="${content}" class="sticker-img"><div class="msg-meta"><span class="time">${time}</span></div>` :
-                `${content}<div class="msg-meta"><span class="time">${time}</span> ${statusIcon}</div>`;
             
-            chatBox.appendChild(div);
-            lucide.createIcons();
+            db.ref('chats').once('value', s => {
+                const data = s.val();
+                if(data) {
+                    document.getElementById('chat-box').innerHTML = "";
+                    Object.values(data).forEach(m => renderMsg(m));
+                }
+                isFirstLoad = false;
+            });
         }
 
-        function toggleEmoji() { 
-            const isOpen = emojiPanel.style.display === 'flex';
-            emojiPanel.style.display = isOpen ? 'none' : 'flex';
-            if(!isOpen) switchTab('emoji', document.querySelector('.tab-btn'));
+        function renderMsg(msg) {
+            const box = document.getElementById('chat-box');
+            const div = document.createElement('div');
+            div.className = `message ${msg.sender === currentUser ? 'sent' : 'received'}`;
+            div.innerHTML = `${msg.content}<div class="msg-meta"><span class="time">${msg.time}</span></div>`;
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
         }
 
-        function switchTab(type, btn) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            panelContent.innerHTML = "";
-            if(type === 'emoji') {
-                panelContent.style.gridTemplateColumns = "1fr";
-                const grid = document.createElement('div');
-                grid.className = 'emoji-grid';
-                const emojis = ["😀","😃","😄","😁","😆","😅","😂","🤣","😊","😇","🙂","🙃","😉","😌","😍","🥰","😘","😗","😙","😚","😋","😛","😝","😜","🤪","🤨","🧐","🤓","😎","🤩","🥳","😏","😒","😞","😔","😟","😕","🙁","☹️","😣","😖","😫","😩","🥺","😢","😭","😤","😠","😡","🤬","🤯","😳","🥵","🥶","😱","😨","😰","😥","😓","🤗","🤔","🤭","🤫","🤥","😶","😐","😑","😬","🙄","😯","😦","😧","😮","😲","🥱","😴","🤤","😪","😵","🤐","🥴","🤢","🤮","🤧","😷","🤒","🤕","🤑","🤠","😈","👿","👹","👺","🤡","💩","👻","💀","☠️","👽","👾","🤖","🎃","😺","😸","😹","😻","😼","😽","🙀","😿","😾","❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟","✨","🔥","⚡️","☀️","🌟","☁️"];
-                emojis.forEach(e => {
-                    const span = document.createElement('span');
-                    span.innerText = e; span.style.cursor = 'pointer';
-                    span.onclick = () => { input.value += e; input.dispatchEvent(new Event('input')); };
-                    grid.appendChild(span);
+        document.getElementById('main-btn').onclick = () => {
+            const inp = document.getElementById('msg-input');
+            if (inp.value.trim()) {
+                db.ref('chats').push({
+                    sender: currentUser,
+                    content: inp.value,
+                    time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+                    timestamp: Date.now()
                 });
-                panelContent.appendChild(grid);
-            } else {
-                panelContent.style.gridTemplateColumns = "repeat(4, 1fr)";
-                const addBtn = document.createElement('div');
-                addBtn.className = 'add-sticker-btn';
-                addBtn.innerHTML = '<i data-lucide="plus"></i>';
-                addBtn.onclick = () => document.getElementById('custom-sticker-input').click();
-                panelContent.appendChild(addBtn);
-
-                db.ref('custom_stickers').once('value', (snap) => {
-                    const stickers = snap.val() || {};
-                    const all = [...defaultStickers, ...Object.values(stickers)];
-                    all.reverse().forEach(src => {
-                        const img = document.createElement('img');
-                        img.src = src; img.className = 'sticker-item';
-                        img.onclick = () => { addMsg(src, 'sent', true); emojiPanel.style.display = 'none'; };
-                        panelContent.appendChild(img);
-                    });
-                    lucide.createIcons();
-                });
+                inp.value = "";
             }
-            lucide.createIcons();
-        }
+        };
 
-        input.addEventListener('input', () => { 
-            const isTyping = input.value.trim() !== "";
-            btnIcon.setAttribute('data-lucide', isTyping ? 'send-horizontal' : 'mic'); 
-            lucide.createIcons(); 
-        });
-
-        mainBtn.addEventListener('click', () => { 
-            if(input.value.trim() !== "") { 
-                addMsg(input.value, 'sent'); 
-                input.value = ""; 
-                btnIcon.setAttribute('data-lucide', 'mic'); 
-                lucide.createIcons(); 
-                emojiPanel.style.display = 'none'; 
-            } 
-        });
-
+        // Perbaikan Fitur Video
         function handleFile(el) {
             const file = el.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    const content = file.type.startsWith('image') ? 
-                        `<img src="${e.target.result}" class="clickable-img" onclick="showFullImg('${e.target.result}')">` : 
-                        `<video src="${e.target.result}" controls></video>`;
-                    addMsg(content, 'sent');
+                    let content = "";
+                    if (file.type.startsWith('image')) {
+                        content = `<img src="${e.target.result}" style="width:100%; border-radius:10px;">`;
+                    } else if (file.type.startsWith('video')) {
+                        content = `<video src="${e.target.result}" controls playsinline style="width:100%;"></video>`;
+                    }
+                    
+                    if (content) {
+                        db.ref('chats').push({
+                            sender: currentUser,
+                            content: content,
+                            time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+                            timestamp: Date.now()
+                        });
+                    }
                 };
                 reader.readAsDataURL(file);
             }
         }
 
-        function uploadCustomSticker(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    db.ref('custom_stickers').push(e.target.result);
-                    switchTab('sticker', document.querySelectorAll('.tab-btn')[1]);
-                };
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-
-        function showFullImg(src) { if(!src) return; document.getElementById('preview-img').src = src; document.getElementById('preview-overlay').style.display = 'flex'; }
-        function downloadImage() { const a = document.createElement('a'); a.href = document.getElementById('preview-img').src; a.download = `WA_Couple_${Date.now()}.png`; a.click(); }
-        function clearHistory() { if(confirm("Hapus semua chat?")) db.ref('chats').remove(); }
-
-        /* Voice Recording Logic */
-        let mediaRecorder, audioChunks = [];
-        async function startRecording() {
-            if(input.value.trim() !== "") return;
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
-                audioChunks = [];
-                mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
-                mediaRecorder.onstop = () => {
-                    const r = new FileReader();
-                    r.onload = () => addMsg(`<audio controls src="${r.result}"></audio>`, 'sent');
-                    r.readAsDataURL(new Blob(audioChunks, { type: 'audio/mpeg' }));
-                    stream.getTracks().forEach(t => t.stop());
-                };
-                mediaRecorder.start(); mainBtn.classList.add('recording');
-            } catch(e) { alert("Mic tidak aktif"); }
-        }
-        function stopRecording() { if (mediaRecorder?.state === "recording") { mediaRecorder.stop(); mainBtn.classList.remove('recording'); } }
-
-        mainBtn.addEventListener('mousedown', startRecording); 
-        mainBtn.addEventListener('mouseup', stopRecording);
-        mainBtn.addEventListener('touchstart', (e) => { if(input.value.trim()==="") { e.preventDefault(); startRecording(); } });
-        mainBtn.addEventListener('touchend', stopRecording);
-        input.addEventListener("keypress", (e) => { if(e.key === "Enter") mainBtn.click(); });
-
         window.onload = () => {
             const saved = localStorage.getItem('logged_user');
             if (saved) { 
                 currentUser = saved; 
-                document.body.addEventListener('click', () => {
-                    notifSound.play().then(() => { notifSound.pause(); notifSound.currentTime = 0; }).catch(() => {});
-                }, { once: true });
-                enterApp(); 
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('app-interface').style.display = 'flex';
+                startApp();
             }
         };
-
-        window.onclick = (e) => {
-            if (!e.target.matches('[data-lucide="more-vertical"]')) {
-                const drop = document.getElementById('burger-dropdown');
-                if (drop) drop.style.display = 'none';
-            }
-        }
     </script>
 </body>
 </html>
