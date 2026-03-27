@@ -2,132 +2,225 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TrackCust JTM - Driver System</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Couple - Okta & Novi</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { background: #f0f2f5; margin: 0; overflow-x: hidden; font-family: sans-serif; }
-        .header-jtm { background: #005580; padding: 12px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
-        .order-card { background: white; border-radius: 15px; padding: 15px; margin: 10px; border-left: 6px solid #e31837; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .btn-action { padding: 12px; border-radius: 8px; font-weight: bold; font-size: 13px; text-align: center; flex: 1; text-transform: uppercase; }
-        .status-badge { background: #ebf5ff; color: #005580; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; }
-        #modal-add { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
+        :root {
+            --wa-green: #075e54;
+            --wa-light-green: #dcf8c6;
+            --wa-blue: #34b7f1;
+            --bg-chat: #e5ddd5;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Helvetica, Arial, sans-serif; }
+
+        body {
+            background-color: var(--bg-chat);
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            background-color: var(--wa-green);
+            color: white;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        .profile-container { position: relative; }
+        .profile-pic {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: #eee url('https://i.pravatar.cc/100?img=26') center/cover;
+        }
+        
+        /* Status Online Dot */
+        .online-dot {
+            width: 12px; height: 12px;
+            background-color: #4df03d;
+            border: 2px solid var(--wa-green);
+            border-radius: 50%;
+            position: absolute;
+            bottom: 2px; right: 0;
+        }
+
+        .user-info h4 { font-size: 16px; font-weight: 600; }
+        .user-info span { font-size: 12px; opacity: 0.9; }
+
+        /* Chat Container */
+        .chat-container {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            position: relative;
+            max-width: 75%;
+            padding: 6px 10px 20px 10px;
+            margin-bottom: 8px;
+            font-size: 14.5px;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+        }
+
+        /* Bubble Style */
+        .received {
+            background: white;
+            align-self: flex-start;
+            border-radius: 0 8px 8px 8px;
+        }
+
+        .sent {
+            background: var(--wa-light-green);
+            align-self: flex-end;
+            border-radius: 8px 0 8px 8px;
+        }
+
+        /* Meta Data (Jam & Centang) */
+        .msg-meta {
+            position: absolute;
+            right: 8px;
+            bottom: 3px;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .time { font-size: 10px; color: #888; }
+        
+        .status-icon {
+            display: flex;
+            align-items: center;
+        }
+
+        /* Input Area */
+        .input-area {
+            background: #f0f0f0;
+            padding: 8px 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-box {
+            background: white;
+            flex: 1;
+            border-radius: 25px;
+            padding: 5px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input {
+            border: none; flex: 1;
+            padding: 8px 0; outline: none;
+            font-size: 15px;
+        }
+
+        .icon-btn { color: #54656f; cursor: pointer; border: none; background: none; }
+
+        .circle-btn {
+            background: #008069;
+            color: white;
+            width: 45px; height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+        }
+
     </style>
 </head>
 <body>
 
-    <div class="header-jtm">
-        <h1 class="text-white font-black italic text-xl">DOMINO'S <span class="text-red-500">JTM</span></h1>
-        <div class="flex items-center gap-2">
-            <span id="activeUser" class="bg-white text-[#005580] px-3 py-1 rounded-full text-[10px] font-black">OKTA</span>
-            <button onclick="location.reload()" class="bg-red-500 text-white w-8 h-8 rounded-md"><i class="fa fa-sync-alt text-xs"></i></button>
+    <div class="header">
+        <div class="profile-container">
+            <div class="profile-pic"></div>
+            <div class="online-dot"></div>
+        </div>
+        <div class="user-info">
+            <h4>Novi ❤️</h4>
+            <span>Online</span>
         </div>
     </div>
 
-    <div class="p-3 bg-white border-b">
-        <div class="relative mb-2">
-            <input type="text" placeholder="Cari Nama/No HP/Driver..." class="w-full bg-gray-100 p-3 rounded-xl text-sm outline-none border border-transparent focus:border-blue-500">
-            <i class="fa fa-search absolute right-4 top-4 text-gray-400"></i>
+    <div class="chat-container" id="chat-box">
+        <div class="message received">
+            Halo Okta! Sudah kirim tugasnya?
+            <div class="msg-meta">
+                <span class="time">14:00</span>
+            </div>
         </div>
-        <div class="flex justify-between items-center px-1">
-            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Total Antrean Aktif</p>
-            <span id="orderCount" class="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">78 Pesanan</span>
-        </div>
-    </div>
 
-    <div id="orderList" class="pb-24">
-        <div class="order-card">
-            <div class="flex justify-between items-start mb-3">
-                <div>
-                    <p class="text-[10px] text-red-600 font-extrabold uppercase">Jatirahayu (Cluster Taman Jatirahayu)</p>
-                    <h3 class="font-bold text-lg">Samuel Bago</h3>
-                    <div class="flex items-center gap-2 mt-1">
-                        <span class="text-[11px] text-gray-500 italic">8 Menit lagi</span>
-                        <span id="driverStatus-1" class="hidden status-badge animate-pulse">
-                            <i class="fa fa-motorcycle mr-1"></i> DIANTAR OLEH: <span class="driver-name">OKTA</span>
-                        </span>
-                    </div>
-                </div>
-                <div class="flex gap-1">
-                    <button class="w-9 h-9 bg-yellow-400 rounded-lg text-white"><i class="fa fa-check"></i></button>
-                    <button onclick="toggleDelivery(1)" class="w-9 h-9 bg-blue-500 rounded-lg text-white shadow-lg active:scale-95 transition-transform">
-                        <i class="fa fa-motorcycle"></i>
-                    </button>
+        <div class="message sent">
+            Belum nih, masih edit video dikit.
+            <div class="msg-meta">
+                <span class="time">14:02</span>
+                <div class="status-icon">
+                    <i data-lucide="check" size="14" color="#888"></i>
                 </div>
             </div>
-            
-            <div class="mb-3 hidden" id="housePreview-1">
-                <img src="https://via.placeholder.com/300x150?text=Foto+Rumah+Customer" class="w-full h-32 object-cover rounded-lg border">
-            </div>
+        </div>
 
-            <div class="flex gap-2">
-                <button class="btn-action bg-[#005580] text-white">MAPS</button>
-                <button class="btn-action bg-[#25d366] text-white">WA</button>
+        <div class="message sent">
+            Tunggu ya, maksimal 30 detik kan?
+            <div class="msg-meta">
+                <span class="time">14:05</span>
+                <div class="status-icon">
+                    <i data-lucide="check-check" size="14" color="#34b7f1"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="message received" style="background:none; box-shadow:none;">
+            <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHY5Mnh6Znd6ZWZ6ZWZ6ZWZ6ZWZ6ZWZ6ZWZ6ZWZ6ZWZ6ZWZ6ZSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/3o7TKMGpxx6B8Z1o64/giphy.gif" width="100" alt="stiker">
+            <div class="msg-meta">
+                <span class="time">14:06</span>
             </div>
         </div>
     </div>
 
-    <div class="fixed bottom-20 right-5">
-        <button onclick="openModal()" class="w-14 h-14 bg-[#005580] rounded-full text-white shadow-2xl border-4 border-white flex items-center justify-center">
-            <i class="fa fa-plus text-2xl"></i>
+    <div class="input-area">
+        <div class="input-box">
+            <button class="icon-btn"><i data-lucide="smile"></i></button>
+            <input type="text" id="msg-input" placeholder="Ketik pesan">
+            <button class="icon-btn"><i data-lucide="paperclip"></i></button>
+            <button class="icon-btn"><i data-lucide="camera"></i></button>
+        </div>
+        
+        <button class="circle-btn" id="main-btn">
+            <i data-lucide="mic"></i>
         </button>
     </div>
 
-    <div id="modal-add" onclick="if(event.target==this) closeModal()">
-        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl">
-            <h2 class="font-black text-[#005580] mb-4 text-center">TAMBAH CUSTOMER</h2>
-            <div class="space-y-3">
-                <input type="text" placeholder="Nama Customer" class="w-full p-3 bg-gray-100 rounded-xl outline-none text-sm">
-                <input type="text" placeholder="Area / Alamat" class="w-full p-3 bg-gray-100 rounded-xl outline-none text-sm">
-                
-                <div class="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center">
-                    <label class="cursor-pointer">
-                        <i class="fa fa-home text-2xl text-gray-400 mb-2"></i>
-                        <p class="text-[10px] text-gray-500">Foto Rumah (Opsional)</p>
-                        <input type="file" class="hidden" accept="image/*" onchange="previewFile(this)">
-                    </label>
-                    <div id="imgPreview" class="hidden mt-2"><img id="targetImg" class="h-20 mx-auto rounded-lg"></div>
-                </div>
-
-                <button class="w-full bg-[#005580] text-white py-3 rounded-xl font-bold shadow-lg">SIMPAN DATA</button>
-            </div>
-        </div>
-    </div>
-
     <script>
-        function openModal() { document.getElementById('modal-add').style.display = 'flex'; }
-        function closeModal() { document.getElementById('modal-add').style.display = 'none'; }
+        lucide.createIcons();
 
-        // Fungsi Preview Foto Rumah
-        function previewFile(input) {
-            const preview = document.getElementById('imgPreview');
-            const target = document.getElementById('targetImg');
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = e => {
-                    target.src = e.target.result;
-                    preview.classList.remove('hidden');
-                }
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
+        const input = document.getElementById('msg-input');
+        const btn = document.getElementById('main-btn');
 
-        // Fitur Tombol Motor: Munculkan nama Driver di samping Menit
-        function toggleDelivery(id) {
-            const status = document.getElementById(`driverStatus-${id}`);
-            const driverName = document.getElementById('activeUser').innerText;
-            
-            if(status.classList.contains('hidden')) {
-                status.classList.remove('hidden');
-                status.querySelector('.driver-name').innerText = driverName;
-                alert(`Driver ${driverName} mulai mengantar!`);
+        // Ganti ikon mic jadi send saat ada teks
+        input.addEventListener('input', () => {
+            if(input.value.trim() !== "") {
+                btn.innerHTML = '<i data-lucide="send-horizontal"></i>';
             } else {
-                status.classList.add('hidden');
+                btn.innerHTML = '<i data-lucide="mic"></i>';
             }
-        }
+            lucide.createIcons();
+        });
     </script>
 </body>
 </html>
