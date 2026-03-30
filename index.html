@@ -23,27 +23,27 @@
         .header { background: var(--wa-green); color: white; padding: 10px 16px; display: flex; align-items: center; gap: 12px; height: 60px; z-index: 100; position: relative; }
         .profile-pic { width: 40px; height: 40px; border-radius: 50%; background: #ccc center/cover; cursor: pointer; transition: 0.3s; border: 1px solid rgba(255,255,255,0.2); }
         
-        .profile-pic.zoom { 
-            position: fixed; 
-            top: 50%; 
-            left: 50%; 
-            transform: translate(-50%, -50%); 
-            width: 85vw; 
-            height: 85vw; 
-            border-radius: 10px; 
-            z-index: 2000; 
-            box-shadow: 0 0 100px rgba(0,0,0,0.5); 
-        }
+        .profile-pic.zoom { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 85vw; height: 85vw; border-radius: 10px; z-index: 2000; box-shadow: 0 0 100px rgba(0,0,0,0.5); }
         
         .chat-container { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; }
-        .message { position: relative; max-width: 80%; padding: 6px 10px 18px 10px; margin-bottom: 8px; font-size: 15px; border-radius: 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); word-wrap: break-word; cursor: pointer; }
+        .message { position: relative; max-width: 80%; padding: 6px 10px 18px 10px; margin-bottom: 8px; font-size: 15px; border-radius: 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); word-wrap: break-word; cursor: pointer; transition: transform 0.2s; }
         .received { background: white; align-self: flex-start; border-top-left-radius: 0; }
         .sent { background: var(--wa-light-green); align-self: flex-end; border-top-right-radius: 0; }
         
+        /* Style Reply dalam Chat */
+        .reply-box-in-chat { background: rgba(0,0,0,0.05); border-left: 4px solid var(--wa-green); padding: 5px; margin-bottom: 5px; border-radius: 4px; font-size: 13px; color: #555; }
+
+        /* Style Reply Area di atas Input */
+        #reply-preview { display: none; background: #eee; padding: 10px; border-left: 5px solid var(--wa-green); position: relative; }
+        #reply-preview span { font-size: 12px; color: var(--wa-green); font-weight: bold; }
+        #reply-preview p { font-size: 14px; color: #555; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .close-reply { position: absolute; right: 10px; top: 10px; cursor: pointer; }
+
         .meta { position: absolute; right: 5px; bottom: 2px; display: flex; align-items: center; gap: 3px; }
         .time { font-size: 10px; color: #888; }
         
-        .input-area { background: #f0f0f0; padding: 8px; display: flex; align-items: center; gap: 5px; position: relative; z-index: 10; }
+        .input-area { background: #f0f0f0; padding: 8px; display: flex; flex-direction: column; position: relative; z-index: 10; }
+        .input-row { display: flex; align-items: center; gap: 5px; }
         .input-box { background: white; flex: 1; border-radius: 25px; padding: 5px 12px; display: flex; align-items: center; gap: 10px; }
         input { border: none; flex: 1; padding: 8px 0; outline: none; font-size: 16px; background: transparent; }
         
@@ -58,17 +58,7 @@
         .emoji-item { font-size: 26px; text-align: center; cursor: pointer; padding: 5px; }
         .sticker-item { width: 100%; aspect-ratio: 1/1; object-fit: cover; cursor: pointer; border-radius: 5px; }
         
-        .overlay { 
-            display: none; 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            background: rgba(0,0,0,0.8); 
-            z-index: 1500; 
-        }
-
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1500; }
         .menu-dropdown { display: none; position: absolute; top: 50px; right: 10px; background: white; color: black; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); padding: 5px; z-index: 1001; min-width: 160px; }
         .menu-item { padding: 12px 15px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 10px; border-radius: 5px; }
 
@@ -80,6 +70,8 @@
 <body onclick="activateAudio()">
 
     <audio id="notif-sound" src="https://raw.githubusercontent.com/Aris-Agustiyan/whatsapp-clone/master/src/assets/sounds/whatsapp_notification.mp3" preload="auto"></audio>
+    <audio id="sent-sound" src="https://www.soundjay.com/communication/sounds/message-sent-1.mp3" preload="auto"></audio>
+    
     <div class="overlay" id="overlay" onclick="closeZoom()"></div>
 
     <div id="login-screen">
@@ -116,6 +108,26 @@
 
         <div class="chat-container" id="chat-box" onclick="closePanels()"></div>
 
+        <div class="input-area">
+            <div id="reply-preview">
+                <span id="reply-user">User</span>
+                <p id="reply-text">Pesan yang dibalas...</p>
+                <i data-lucide="x" class="close-reply" onclick="cancelReply()"></i>
+            </div>
+
+            <div class="input-row">
+                <div class="input-box">
+                    <i data-lucide="smile" onclick="toggleEmoji()" style="cursor:pointer"></i>
+                    <input type="text" id="msg-input" placeholder="Ketik pesan..." oninput="toggleBtn()" onfocus="closePanels()">
+                    <label for="file-input"><i data-lucide="paperclip" style="cursor:pointer"></i></label>
+                    <input type="file" id="file-input" hidden accept="image/*" onchange="handleImage(this)">
+                </div>
+                <button class="circle-btn" id="action-btn" onmousedown="startRecording()" onmouseup="stopRecording()" ontouchstart="startRecording()" ontouchend="stopRecording()" onclick="handleAction()">
+                    <i data-lucide="mic" id="btn-icon"></i>
+                </button>
+            </div>
+        </div>
+
         <div id="emoji-panel">
             <div class="tab-bar">
                 <div class="tab-btn tab-active" id="tab-emoji" onclick="switchTab('emoji')">Emoji</div>
@@ -123,18 +135,6 @@
             </div>
             <div id="emoji-content" class="grid-content"></div>
             <div id="sticker-content" class="grid-content sticker-grid" style="display:none"></div>
-        </div>
-
-        <div class="input-area">
-            <div class="input-box">
-                <i data-lucide="smile" onclick="toggleEmoji()" style="cursor:pointer"></i>
-                <input type="text" id="msg-input" placeholder="Ketik pesan..." oninput="toggleBtn()" onfocus="closePanels()">
-                <label for="file-input"><i data-lucide="paperclip" style="cursor:pointer"></i></label>
-                <input type="file" id="file-input" hidden accept="image/*" onchange="handleImage(this)">
-            </div>
-            <button class="circle-btn" id="action-btn" onmousedown="startRecording()" onmouseup="stopRecording()" ontouchstart="startRecording()" ontouchend="stopRecording()" onclick="handleAction()">
-                <i data-lucide="mic" id="btn-icon"></i>
-            </button>
         </div>
     </div>
 
@@ -152,31 +152,32 @@
         let isFirstLoad = true;
         let mediaRecorder;
         let audioChunks = [];
-        const audio = document.getElementById('notif-sound');
+        let replyData = null; // Untuk menyimpan pesan yang akan direply
 
-        function activateAudio() { audio.play().then(() => { audio.pause(); audio.currentTime = 0; }).catch(() => {}); document.body.removeAttribute('onclick'); }
+        const audioNotif = document.getElementById('notif-sound');
+        const audioSent = document.getElementById('sent-sound');
+
+        function activateAudio() { 
+            audioNotif.play().then(() => audioNotif.pause());
+            audioSent.play().then(() => audioSent.pause());
+            document.body.removeAttribute('onclick'); 
+        }
+
         function getTime() { return new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); }
 
-        // --- FITUR BARU: SAVE GAMBAR ---
+        function triggerVibrate(ms) { if (navigator.vibrate) navigator.vibrate(ms); }
+
         function saveImage(url) {
             if(confirm("Simpan gambar ke galeri?")) {
                 const link = document.createElement('a');
-                link.href = url;
-                link.download = `WhatsApp_Image_${Date.now()}.png`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                link.href = url; link.download = `IMG_${Date.now()}.png`;
+                document.body.appendChild(link); link.click(); document.body.removeChild(link);
             }
         }
 
         window.onload = () => {
             const savedUser = localStorage.getItem('logged_user_oknov');
-            if(savedUser) {
-                currentUser = savedUser;
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('app-interface').style.display = 'flex';
-                startApp();
-            }
+            if(savedUser) { currentUser = savedUser; startApp(); }
         };
 
         function loginAs(name) {
@@ -185,27 +186,21 @@
             if (pin === pins[name]) {
                 currentUser = name;
                 localStorage.setItem('logged_user_oknov', name); 
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('app-interface').style.display = 'flex';
                 startApp();
             } else { alert("PIN Salah!"); }
         }
 
-        function logout() {
-            if(currentUser) db.ref(`profiles/${currentUser}`).update({ status: `Terakhir dilihat ${getTime()}` });
-            localStorage.removeItem('logged_user_oknov');
-            location.reload();
-        }
-
         function startApp() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app-interface').style.display = 'flex';
             lucide.createIcons();
             initEmoji();
             initStickers();
             const partner = currentUser === "Okta" ? "Novi" : "Okta";
             
-            const userStatusRef = db.ref(`profiles/${currentUser}`);
-            userStatusRef.update({ status: "Online" });
-            userStatusRef.onDisconnect().update({ status: `Terakhir dilihat ${getTime()}` });
+            db.ref(`profiles/${currentUser}`).update({ status: "Online" }).then(() => {
+                db.ref(`profiles/${currentUser}`).onDisconnect().update({ status: `Terakhir dilihat ${getTime()}` });
+            });
 
             db.ref(`profiles/${partner}`).on('value', s => {
                 const d = s.val() || {};
@@ -224,25 +219,27 @@
                         const div = document.createElement('div');
                         div.className = `message ${m.sender === currentUser ? 'sent' : 'received'}`;
                         
-                        div.oncontextmenu = (e) => { e.preventDefault(); confirmDelete(key); };
+                        // Handler Reply & Delete
                         let timer;
-                        div.ontouchstart = () => timer = setTimeout(() => confirmDelete(key), 800);
+                        div.onclick = () => setReply(m.sender, m.content);
+                        div.oncontextmenu = (e) => { e.preventDefault(); if(confirm("Hapus pesan?")) db.ref(`chats/${key}`).remove(); };
+                        div.ontouchstart = () => timer = setTimeout(() => { triggerVibrate(40); if(confirm("Hapus pesan?")) db.ref(`chats/${key}`).remove(); }, 800);
                         div.ontouchend = () => clearTimeout(timer);
 
+                        let replyHtml = m.replyTo ? `<div class="reply-box-in-chat"><b>${m.replyTo.user}</b><br>${m.replyTo.msg}</div>` : "";
                         let content = `<span>${m.content}</span>`;
-                        // Ditambahkan onclick="saveImage" untuk gambar dan stiker
                         if(m.type === 'image') content = `<img src="${m.content}" class="chat-img" onclick="saveImage('${m.content}')">`;
                         if(m.type === 'vn') content = `<audio controls class="vn-msg"><source src="${m.content}"></audio>`;
                         if(m.type === 'sticker') content = `<img src="${m.content}" class="sticker-msg" onclick="saveImage('${m.content}')">`;
 
                         const status = m.read ? `<i data-lucide="check-check" style="color:var(--wa-blue); width:14px;"></i>` : `<i data-lucide="check" style="color:#888; width:14px;"></i>`;
-                        div.innerHTML = `${content}<div class="meta"><span class="time">${m.time}</span>${m.sender === currentUser ? status : ''}</div>`;
+                        div.innerHTML = `${replyHtml}${content}<div class="meta"><span class="time">${m.time}</span>${m.sender === currentUser ? status : ''}</div>`;
                         box.appendChild(div);
                         if(m.sender !== currentUser && !m.read) db.ref(`chats/${key}`).update({ read: true });
                     });
                     if (!isFirstLoad) {
                         const keys = Object.keys(data);
-                        if(data[keys[keys.length-1]].sender !== currentUser) audio.play().catch(()=>{});
+                        if(data[keys[keys.length-1]].sender !== currentUser) { audioNotif.play().catch(()=>{}); triggerVibrate([100, 50, 100]); }
                     }
                 }
                 isFirstLoad = false;
@@ -251,31 +248,45 @@
             });
         }
 
-        function confirmDelete(key) { if(confirm("Hapus pesan ini?")) db.ref(`chats/${key}`).remove(); }
-        
+        // FUNGSI REPLY
+        function setReply(user, msg) {
+            replyData = { user, msg: msg.substring(0, 50) + (msg.length > 50 ? "..." : "") };
+            document.getElementById('reply-user').innerText = user;
+            document.getElementById('reply-text').innerText = msg;
+            document.getElementById('reply-preview').style.display = 'block';
+            document.getElementById('msg-input').focus();
+            triggerVibrate(30);
+        }
+
+        function cancelReply() {
+            replyData = null;
+            document.getElementById('reply-preview').style.display = 'none';
+        }
+
         function handleAction() {
             const inp = document.getElementById('msg-input');
             if(inp.value.trim()) {
-                db.ref('chats').push({ sender: currentUser, content: inp.value, type: 'text', time: getTime(), read: false });
-                inp.value = ""; toggleBtn();
+                db.ref('chats').push({ 
+                    sender: currentUser, 
+                    content: inp.value, 
+                    type: 'text', 
+                    time: getTime(), 
+                    read: false,
+                    replyTo: replyData 
+                });
+                inp.value = ""; cancelReply(); toggleBtn();
+                audioSent.play().catch(()=>{}); triggerVibrate(50);
             }
         }
 
         function handleImage(el) {
-            const file = el.files[0];
-            if(file) {
+            if(el.files[0]) {
                 const r = new FileReader();
-                r.onload = e => db.ref('chats').push({ sender: currentUser, content: e.target.result, type: 'image', time: getTime(), read: false });
-                r.readAsDataURL(file);
-            }
-        }
-
-        function uploadSticker(el) {
-            const file = el.files[0];
-            if(file) {
-                const r = new FileReader();
-                r.onload = e => db.ref('custom_stickers').push(e.target.result);
-                r.readAsDataURL(file);
+                r.onload = e => {
+                    db.ref('chats').push({ sender: currentUser, content: e.target.result, type: 'image', time: getTime(), read: false, replyTo: replyData });
+                    audioSent.play().catch(()=>{}); triggerVibrate(50); cancelReply();
+                };
+                r.readAsDataURL(el.files[0]);
             }
         }
 
@@ -287,9 +298,37 @@
                 if(data) Object.values(data).forEach(url => {
                     const img = document.createElement('img');
                     img.className = "sticker-item"; img.src = url;
-                    img.onclick = () => db.ref('chats').push({ sender: currentUser, content: url, type: 'sticker', time: getTime(), read: false });
+                    img.onclick = () => {
+                        db.ref('chats').push({ sender: currentUser, content: url, type: 'sticker', time: getTime(), read: false, replyTo: replyData });
+                        audioSent.play().catch(()=>{}); cancelReply();
+                    };
                     cont.appendChild(img);
                 });
+            });
+        }
+
+        // UI Helpers
+        function toggleBtn() { document.getElementById('btn-icon').setAttribute('data-lucide', document.getElementById('msg-input').value.trim() ? 'send-horizontal' : 'mic'); lucide.createIcons(); }
+        function toggleEmoji() { const p = document.getElementById('emoji-panel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; }
+        function switchTab(t) { 
+            document.getElementById('emoji-content').style.display = t === 'emoji' ? 'grid' : 'none';
+            document.getElementById('sticker-content').style.display = t === 'sticker' ? 'grid' : 'none';
+            document.getElementById('tab-emoji').classList.toggle('tab-active', t === 'emoji');
+            document.getElementById('tab-sticker').classList.toggle('tab-active', t === 'sticker');
+        }
+        function closePanels() { document.getElementById('emoji-panel').style.display = 'none'; document.getElementById('menu-dropdown').style.display = 'none'; }
+        function toggleMenu(e) { e.stopPropagation(); const m = document.getElementById('menu-dropdown'); m.style.display = m.style.display === 'block' ? 'none' : 'block'; }
+        function zoomPic() { document.getElementById('header-pic').classList.add('zoom'); document.getElementById('overlay').style.display = 'block'; }
+        function closeZoom() { document.getElementById('header-pic').classList.remove('zoom'); document.getElementById('overlay').style.display = 'none'; }
+        function updateProfilePic(el) { if(el.files[0]) { const r = new FileReader(); r.onload = e => db.ref(`profiles/${currentUser}`).update({ pic: e.target.result }); r.readAsDataURL(el.files[0]); } }
+        function uploadSticker(el) { if(el.files[0]) { const r = new FileReader(); r.onload = e => db.ref('custom_stickers').push(e.target.result); r.readAsDataURL(el.files[0]); } }
+
+        function initEmoji() {
+            const emojis = ["😊","😂","🤣","❤️","😍","😘","🥰","😇","😋","😛","😜","🤪","🤨","🧐","🤔","🤫","🫠","🫣","🫢","🫡","🤩","🥳","🥵","🥶","🥺","😭","😤","😠","😡","🤬","🤯","😳","🤗","😰","😱","🥱","😴","🤤","🤢","🤮","😎","🤓","🤨","😒","🙄","😬","🤥","😶","😐","😑","🤐","🥴","😵","🙌","👏","👋","👍","👎","👊","🙏","🤝","🔥","✨","💯"];
+            emojis.forEach(e => {
+                const s = document.createElement('div'); s.className = "emoji-item"; s.innerText = e;
+                s.onclick = () => { document.getElementById('msg-input').value += e; toggleBtn(); };
+                document.getElementById('emoji-content').appendChild(s);
             });
         }
 
@@ -302,51 +341,16 @@
                 mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
                 mediaRecorder.onstop = () => {
                     const r = new FileReader();
-                    r.onload = e => db.ref('chats').push({ sender: currentUser, content: e.target.result, type: 'vn', time: getTime(), read: false });
+                    r.onload = e => db.ref('chats').push({ sender: currentUser, content: e.target.result, type: 'vn', time: getTime(), read: false, replyTo: replyData });
                     r.readAsDataURL(new Blob(audioChunks, { type: 'audio/webm' }));
+                    cancelReply();
                 };
                 mediaRecorder.start();
+                triggerVibrate(60);
                 document.getElementById('action-btn').style.background = 'red';
             } catch (err) { alert("Mic Error"); }
         }
-
         function stopRecording() { if(mediaRecorder && mediaRecorder.state === "recording") { mediaRecorder.stop(); document.getElementById('action-btn').style.background = '#008069'; } }
-        
-        function toggleBtn() { document.getElementById('btn-icon').setAttribute('data-lucide', document.getElementById('msg-input').value.trim() ? 'send-horizontal' : 'mic'); lucide.createIcons(); }
-        
-        function toggleEmoji() { const p = document.getElementById('emoji-panel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; }
-        
-        function switchTab(t) { 
-            document.getElementById('emoji-content').style.display = t === 'emoji' ? 'grid' : 'none';
-            document.getElementById('sticker-content').style.display = t === 'sticker' ? 'grid' : 'none';
-            document.getElementById('tab-emoji').classList.toggle('tab-active', t === 'emoji');
-            document.getElementById('tab-sticker').classList.toggle('tab-active', t === 'sticker');
-        }
-
-        function closePanels() { document.getElementById('emoji-panel').style.display = 'none'; document.getElementById('menu-dropdown').style.display = 'none'; }
-        
-        function toggleMenu(e) { e.stopPropagation(); const m = document.getElementById('menu-dropdown'); m.style.display = m.style.display === 'block' ? 'none' : 'block'; }
-        
-        function zoomPic() { 
-            document.getElementById('header-pic').classList.add('zoom'); 
-            document.getElementById('overlay').style.display = 'block'; 
-        }
-        
-        function closeZoom() { 
-            document.getElementById('header-pic').classList.remove('zoom'); 
-            document.getElementById('overlay').style.display = 'none'; 
-        }
-        
-        function updateProfilePic(el) { if(el.files[0]) { const r = new FileReader(); r.onload = e => db.ref(`profiles/${currentUser}`).update({ pic: e.target.result }); r.readAsDataURL(el.files[0]); } }
-        
-        function initEmoji() {
-            const emojis = ["😊","😂","🤣","❤️","😍","😘","🥰","😇","😋","😛","😜","🤪","🤨","🧐","🤔","🤫","🫠","🫣","🫢","🫡","🤩","🥳","🥵","🥶","🥺","😭","😤","😠","😡","🤬","🤯","😳","🤗","😰","😱","🥱","SLEEP","🤤","🤢","🤮","😎","🤓","🤨","😒","🙄","😬","🤥","😶","😐","😑","🤐","🥴","😵","🙌","👏","👋","👍","👎","👊","🙏","🤝","🔥","✨","💯"];
-            emojis.forEach(e => {
-                const s = document.createElement('div'); s.className = "emoji-item"; s.innerText = e;
-                s.onclick = () => { document.getElementById('msg-input').value += e; toggleBtn(); };
-                document.getElementById('emoji-content').appendChild(s);
-            });
-        }
     </script>
 </body>
 </html>
